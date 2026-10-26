@@ -1,0 +1,23 @@
+{
+  "name": "react-threaded-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo for react-threaded: typed Web Workers for React.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @react-threaded/demo dev",
+    "build": "pnpm --filter react-threaded build",
+    "build:demo": "pnpm --filter @react-threaded/demo build",
+    "preview:demo": "pnpm --filter @react-threaded/demo preview",
+    "test": "pnpm --filter react-threaded test",
+    "test:coverage": "pnpm --filter react-threaded test:coverage",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm build:demo",
+    "lint": "pnpm --recursive --if-present lint",
+    "publish:lib": "pnpm --filter react-threaded publish"
+  }
+}
