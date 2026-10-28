@@ -1,7 +1,16 @@
 import type { ComponentType } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { AtomIcon, BoltIcon, GaugeIcon, LayersIcon, ShieldIcon, ThreadIcon } from '../components/Icons'
+import {
+  AtomIcon,
+  BoltIcon,
+  GaugeIcon,
+  LayersIcon,
+  RocketIcon,
+  ShieldIcon,
+  ThreadIcon,
+} from '../components/Icons'
 import type { IconProps } from '../components/Icons'
+import { CanvasDemo } from '../demos/CanvasDemo'
 import { PluginsDemo } from '../demos/PluginsDemo'
 import { PoolDemo } from '../demos/PoolDemo'
 import { PrimeDemo } from '../demos/PrimeDemo'
@@ -17,6 +26,7 @@ type DemoTab = {
 }
 
 const demoTabs: readonly DemoTab[] = [
+  { id: 'canvas', label: 'Canvas swarm', icon: RocketIcon, Demo: CanvasDemo },
   { id: 'cancellation', label: 'Cancellation', icon: GaugeIcon, Demo: PrimeDemo },
   { id: 'transfer', label: 'Transferables', icon: BoltIcon, Demo: TransferDemo },
   { id: 'pools', label: 'Pools', icon: LayersIcon, Demo: PoolDemo },
@@ -29,8 +39,8 @@ export function PlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const requested = searchParams.get('demo')
   const active = demoTabs.find((tab) => tab.id === requested) ?? demoTabs[0]
-  const activeId = active?.id ?? 'cancellation'
-  const ActiveDemo = active?.Demo ?? PrimeDemo
+  const activeId = active?.id ?? 'canvas'
+  const ActiveDemo = active?.Demo ?? CanvasDemo
 
   const selectDemo = (id: string) => {
     setSearchParams({ demo: id })
@@ -43,7 +53,7 @@ export function PlaygroundPage() {
         <div className="grid-wash" aria-hidden="true" />
         <div className="shell page-masthead__inner">
           <span className="eyebrow">Live playground</span>
-          <h1>Six workloads. One typed API.</h1>
+          <h1>Seven workloads. One typed API.</h1>
           <p>
             Everything below runs in your browser against the actual package source — not a video,
             a mock, or a pre-recorded result. Open DevTools and watch the threads.

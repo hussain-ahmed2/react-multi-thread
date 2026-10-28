@@ -12,7 +12,7 @@ This repository contains the published library and a live demo site that exercis
 | Path | Description |
 | --- | --- |
 | [`packages/react-threaded`](./packages/react-threaded) | The `react-threaded` npm package. ESM + CJS + type declarations. |
-| [`apps/demo`](./apps/demo) | Vite + React playground, documentation, and six working demos. |
+| [`apps/demo`](./apps/demo) | Vite + React playground, documentation, and seven working demos. |
 | [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) | GitHub Pages build, verification, and deployment. |
 
 ## Live demo notes
@@ -77,6 +77,7 @@ Read the full API, configuration reference, and publishing guide in
 
 The playground covers:
 
+- a canvas boid swarm with O(n²) neighbor calculations
 - cancellation with termination and cooperative checks
 - zero-copy transferables
 - bounded worker pools with live stats

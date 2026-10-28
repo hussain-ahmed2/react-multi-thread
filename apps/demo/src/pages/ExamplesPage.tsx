@@ -4,6 +4,48 @@ import { ArrowIcon, ChevronRightIcon } from '../components/Icons'
 
 const examples = [
   {
+    id: 'canvas-swarm',
+    tag: 'Canvas + O(n²)',
+    title: 'Run a canvas game loop off the main thread',
+    body: 'A boid swarm performs millions of neighbor checks per frame. The worker computes the next positions and returns a transferred Float32Array; the main thread only paints it, so input and React stay responsive.',
+    docs: { label: 'Transferables guide', to: '/docs/concepts#transferables' },
+    code: `const swarm = createWorker(({ buffer, count, width, height }) => {
+  const boids = new Float32Array(buffer)
+  let checks = 0
+
+  for (let i = 0; i < count; i += 1) {
+    const offset = i * 4
+
+    for (let j = 0; j < count; j += 1) {
+      if (i === j) continue
+      checks += 1
+
+      // alignment, cohesion, separation, edges, pointer repel...
+    }
+  }
+
+  return { buffer: boids.buffer, checks }
+})
+
+let boids = new Float32Array(count * 4)
+const worker = useWorker(swarm, { eager: true })
+
+async function frame() {
+  const result = await worker.run({
+    buffer: boids.buffer,
+    count,
+    width,
+    height,
+  })
+
+  boids = new Float32Array(result.buffer)
+  draw(boids)
+  requestAnimationFrame(() => void frame())
+}
+
+requestAnimationFrame(() => void frame())`,
+  },
+  {
     id: 'image-resize',
     tag: 'Transferables',
     title: 'Resize an image without blocking paint',
@@ -125,8 +167,9 @@ export function ExamplesPage() {
           <span className="eyebrow">Examples</span>
           <h1>Patterns for the work that hurts.</h1>
           <p>
-            Four recipes that cover the common shapes: ownership transfer, progress, fan-out, and
-            method-style APIs. Every snippet is runnable against the published package.
+            Five recipes that cover the common shapes: a canvas game loop, ownership transfer,
+            progress, fan-out, and method-style APIs. Every snippet is runnable against the
+            published package.
           </p>
           <div className="page-masthead__actions">
             <Link className="button button--primary" to="/playground">

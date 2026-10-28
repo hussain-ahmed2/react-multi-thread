@@ -47,7 +47,7 @@ Demo and documentation: https://hussain-ahmed2.github.io/react-threaded/
 
 ## Examples
 
-- [Playground](https://hussain-ahmed2.github.io/react-threaded/playground): Live cancellation, transferable, pool, shared-memory, proxy, retry, and plugin demos.
+- [Playground](https://hussain-ahmed2.github.io/react-threaded/playground): Live canvas swarm, cancellation, transferable, pool, shared-memory, proxy, retry, and plugin demos.
 - [Examples](https://hussain-ahmed2.github.io/react-threaded/examples): Runnable React worker examples.
 
 ## Optional
