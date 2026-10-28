@@ -16,14 +16,14 @@
   ],
   "license": "MIT",
   "author": "Hussain Ahmed",
-  "homepage": "https://github.com/hussain-ahmed2/react-multi-thread#readme",
+  "homepage": "https://hussain-ahmed2.github.io/react-threaded/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hussain-ahmed2/react-multi-thread.git",
+    "url": "git+https://github.com/hussain-ahmed2/react-threaded.git",
     "directory": "packages/react-threaded"
   },
   "bugs": {
-    "url": "https://github.com/hussain-ahmed2/react-multi-thread/issues"
+    "url": "https://github.com/hussain-ahmed2/react-threaded/issues"
   },
   "type": "module",
   "sideEffects": false,

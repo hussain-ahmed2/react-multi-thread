@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "description": "Monorepo for react-threaded: typed Web Workers for React.",
+  "homepage": "https://hussain-ahmed2.github.io/react-threaded/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hussain-ahmed2/react-threaded.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hussain-ahmed2/react-threaded/issues"
+  },
   "license": "MIT",
   "packageManager": "pnpm@11.15.1",
   "engines": {

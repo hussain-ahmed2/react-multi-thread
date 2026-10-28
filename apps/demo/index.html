@@ -7,9 +7,28 @@
       name="description"
       content="react-threaded — typed Web Workers for React. Hooks, cancellable tasks, worker pools, shared atomics, plugins, and Comlink-style proxies."
     />
-    <meta name="theme-color" content="#07080d" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfaf6" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>react-threaded · Multithreading for React</title>
+    <title>react-threaded — Typed Web Workers for React</title>
+    <script>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('react-threaded:theme')
+          const dark =
+            stored === 'dark' ||
+            (stored === null && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', dark ? '#171410' : '#fbfaf6')
+        } catch {
+          // A blocked storage API should not stop the page.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

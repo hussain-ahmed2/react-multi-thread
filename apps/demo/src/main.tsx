@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import './styles.css'
 
@@ -9,8 +10,12 @@ if (container === null) {
   throw new Error('Demo root element was not found')
 }
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
+
 createRoot(container).render(
   <StrictMode>
-    <App />
+    <BrowserRouter basename={basename}>
+      <App />
+    </BrowserRouter>
   </StrictMode>,
 )

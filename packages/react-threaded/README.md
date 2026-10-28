@@ -6,6 +6,9 @@ Typed Web Workers for React: hooks, cancellable tasks, worker pools, shared atom
 [![license](https://img.shields.io/npm/l/react-threaded.svg)](./LICENSE)
 [![types](https://img.shields.io/npm/types/react-threaded.svg)](https://www.npmjs.com/package/react-threaded)
 
+- **Live demo:** [https://hussain-ahmed2.github.io/react-threaded/](https://hussain-ahmed2.github.io/react-threaded/)
+- **Docs:** [https://hussain-ahmed2.github.io/react-threaded/docs](https://hussain-ahmed2.github.io/react-threaded/docs)
+
 - **Typed end to end.** The worker function is the source of truth for inputs, outputs, progress, and per-method arguments.
 - **Cancellation that works.** Hard terminate a synchronous loop and respawn it, or cancel cooperatively through `SharedArrayBuffer` and `ctx.yield()`.
 - **Pools and proxies.** Fan out with bounded concurrency or expose a methods worker as a promise-based object.
@@ -22,6 +25,10 @@ npm install react-threaded
 ```
 
 React is a peer dependency: `react >= 18`.
+
+The [live documentation](https://hussain-ahmed2.github.io/react-threaded/docs) includes setup guides
+for React + Vite, Next.js, React Router, Astro, TanStack Start, Waku, RedwoodSDK, and Gatsby, plus
+deployment and troubleshooting notes.
 
 ## Quick start
 

@@ -92,3 +92,120 @@ export function GaugeIcon(props: IconProps) {
     </svg>
   )
 }
+
+export function SunIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="12" r="4" />
+      <path
+        d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.4 8.4 0 1 0 10.4 10.4Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function MenuIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function BookIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" strokeLinejoin="round" />
+      <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" />
+    </svg>
+  )
+}
+
+export function RocketIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M13.5 5.5c2.4-2.4 5-3.2 7-3-0.2 2-1 4.6-3.4 7l-3.2 3.2-4.1-2.1 2.1-4.1 1.6-1Z" strokeLinejoin="round" />
+      <path d="m9.8 10.6-3.3.6-2 3 3.6.7m4.7 1.6.7 3.6 3-2 .6-3.3" strokeLinejoin="round" />
+      <circle cx="15.5" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M6 18c-1 1-1.5 2.5-1.5 4 1.5 0 3-.5 4-1.5" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function CodeIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m8 8-5 4 5 4m8-8 5 4-5 4m-3-11-2 14" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function ExternalLinkIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M14 4h6v6m0-6-9 9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function PackageIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" strokeLinejoin="round" />
+      <path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12v9" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function TerminalIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="1.5" />
+      <path d="m7 9 3 3-3 3m6 0h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M12 3 2.5 20h19L12 3Z" strokeLinejoin="round" />
+      <path d="M12 9v5m0 3v.01" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function InfoIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5m0-8v.01" strokeLinecap="round" />
+    </svg>
+  )
+}

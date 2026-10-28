@@ -9,6 +9,7 @@ const crossOriginHeaders = {
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.DEMO_BASE ?? '/',
   resolve: {
     alias: {
       'react-threaded': fileURLToPath(

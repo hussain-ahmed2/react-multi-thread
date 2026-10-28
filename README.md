@@ -1,13 +1,28 @@
 # react-threaded monorepo
 
+[![Deploy demo to GitHub Pages](https://github.com/hussain-ahmed2/react-threaded/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/hussain-ahmed2/react-threaded/actions/workflows/deploy-pages.yml)
+
 Typed Web Workers for React: hooks, cancellable tasks, worker pools, shared atomics, plugins, and Comlink-style proxies.
+
+- **Live demo:** [https://hussain-ahmed2.github.io/react-threaded/](https://hussain-ahmed2.github.io/react-threaded/)
+- **Documentation:** [https://hussain-ahmed2.github.io/react-threaded/docs](https://hussain-ahmed2.github.io/react-threaded/docs)
 
 This repository contains the published library and a live demo site that exercises the real package source.
 
 | Path | Description |
 | --- | --- |
 | [`packages/react-threaded`](./packages/react-threaded) | The `react-threaded` npm package. ESM + CJS + type declarations. |
-| [`apps/demo`](./apps/demo) | Vite + React playground with six working demos. |
+| [`apps/demo`](./apps/demo) | Vite + React playground, documentation, and six working demos. |
+| [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) | GitHub Pages build, verification, and deployment. |
+
+## Live demo notes
+
+The Pages deployment is served from `/react-threaded/`. GitHub Pages cannot set custom response
+headers, so `SharedArrayBuffer` is unavailable there and the shared-atomics demo uses its local
+fallback. Every other feature works normally.
+
+For full cross-origin isolation (`crossOriginIsolated === true`) and real shared memory, deploy the
+demo to Netlify, Vercel, or Cloudflare Pages with the COOP/COEP headers documented in the demo.
 
 ## Requirements
 
@@ -34,6 +49,7 @@ The demo runs at `http://localhost:5173`.
 | `pnpm test` | Run the library test suite (40 tests). |
 | `pnpm test:coverage` | Run tests with V8 coverage. |
 | `pnpm typecheck` | Typecheck every workspace package. |
+| `pnpm verify` | Typecheck, test, build the library, and build the demo. |
 | `pnpm publish:lib` | Publish `packages/react-threaded` to npm. |
 
 ## Library
@@ -74,6 +90,49 @@ The Vite config sets the cross-origin isolation headers required for
 ```http
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
+```
+
+## Documentation
+
+The live docs include the execution model, the full API, deployment guidance, troubleshooting, and
+framework recipes for:
+
+- React + Vite
+- Next.js App Router
+- React Router
+- Astro
+- TanStack Start
+- Waku
+- RedwoodSDK
+- Gatsby
+
+The demo also includes light and dark forest-green themes, responsive docs navigation, and a
+persistent theme preference.
+
+## GitHub Pages deployment
+
+The workflow at
+[`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) runs on every push to
+`main`, verifies the workspace, builds the demo with `DEMO_BASE=/react-threaded/`, creates the SPA
+fallback, and deploys the artifact.
+
+Before the first run, open **Settings → Pages** in the GitHub repository and set the source to
+**GitHub Actions**. The workflow can then publish to:
+
+`https://hussain-ahmed2.github.io/react-threaded/`
+
+Local production previews do not use the repository base:
+
+```bash
+pnpm build:demo
+pnpm preview:demo
+```
+
+To reproduce the Pages build locally:
+
+```bash
+DEMO_BASE=/react-threaded/ pnpm build:demo
+cp apps/demo/dist/index.html apps/demo/dist/404.html
 ```
 
 ## Publishing
