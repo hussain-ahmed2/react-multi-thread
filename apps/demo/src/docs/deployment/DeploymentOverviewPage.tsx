@@ -139,6 +139,20 @@ Cross-Origin-Embedder-Policy: require-corp`}</code>
         </div>
       </DocSection>
 
+      <DocSection id="recipes" title="Framework-specific deployment">
+        <p>
+          A static SPA fallback is not a universal deployment recipe. Next.js, React Router
+          framework mode, TanStack Start server mode, Waku, and RedwoodSDK have different build
+          outputs and runtime requirements. The recipes page maps every framework to Vercel,
+          Netlify, Cloudflare, and GitHub Pages, including the combinations that are unsupported.
+        </p>
+        <p>
+          <Link className="button button--primary" to="/docs/deployment/recipes">
+            Open framework deployment recipes
+          </Link>
+        </p>
+      </DocSection>
+
       <DocSection id="caching" title="Caching">
         <p>
           Vite fingerprints assets, so <code>/assets/*</code> can be cached immutably. Serve{' '}

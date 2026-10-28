@@ -1,0 +1,55 @@
+# react-threaded
+
+> Typed Web Workers for React with hooks, hard cancellation, worker pools, shared atomics, plugins, and Comlink-style method proxies. Zero runtime dependencies.
+
+Package: https://www.npmjs.com/package/react-threaded
+Source: https://github.com/hussain-ahmed2/react-threaded
+Demo and documentation: https://hussain-ahmed2.github.io/react-threaded/
+
+## Core facts
+
+- React 18 or newer, TypeScript 5 or newer, modern browser with Web Workers.
+- Workers run from Blob URLs by default, so no bundler-specific worker file is required.
+- Worker inputs and results use structured clone. Transferables move ownership instead of copying.
+- Shared atomics and SharedArrayBuffer require cross-origin isolation: COOP `same-origin` and COEP `require-corp`.
+- GitHub Pages cannot set COOP or COEP. The demo detects isolation and falls back from shared atomics.
+- A static SPA fallback (`/*` to `/index.html`) is safe only for client-rendered apps. Never add it to Next.js, Waku, RedwoodSDK, or other server-rendered deployments.
+- The package has zero runtime dependencies.
+
+## Documentation
+
+- [Documentation index](https://hussain-ahmed2.github.io/react-threaded/docs): Installation, concepts, API, frameworks, deployment, and troubleshooting.
+- [Getting started](https://hussain-ahmed2.github.io/react-threaded/docs/getting-started): Install the package and run a typed worker with `createWorker` and `useWorker`.
+- [Core concepts](https://hussain-ahmed2.github.io/react-threaded/docs/concepts): Blob worker execution, serialization, cancellation, transferables, pools, and shared memory.
+- [API reference](https://hussain-ahmed2.github.io/react-threaded/docs/api): Hooks, worker handles, pools, shared atoms, plugins, proxies, and exported types.
+- [Troubleshooting](https://hussain-ahmed2.github.io/react-threaded/docs/troubleshooting): SharedArrayBuffer, cross-origin isolation, CSP, SSR, serialization, and deployment failures.
+
+## Framework guides
+
+- [React + Vite](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/vite)
+- [Next.js App Router](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/nextjs)
+- [React Router](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/react-router)
+- [Astro](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/astro)
+- [TanStack Start](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/tanstack-start)
+- [Waku](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/waku)
+- [RedwoodSDK](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/redwood-sdk)
+- [Gatsby](https://hussain-ahmed2.github.io/react-threaded/docs/frameworks/gatsby)
+
+## Deployment
+
+- [Deployment overview](https://hussain-ahmed2.github.io/react-threaded/docs/deployment): Headers, MIME types, caching, and SPA fallback rules.
+- [Vercel](https://hussain-ahmed2.github.io/react-threaded/docs/deployment/vercel): `vercel.json`, headers, rewrites, and framework presets.
+- [Netlify](https://hussain-ahmed2.github.io/react-threaded/docs/deployment/netlify): `netlify.toml`, headers, redirects, and Next.js runtime deployment.
+- [Cloudflare](https://hussain-ahmed2.github.io/react-threaded/docs/deployment/cloudflare-pages): Pages, Workers, `_headers`, `_redirects`, and Wrangler.
+- [GitHub Pages](https://hussain-ahmed2.github.io/react-threaded/docs/deployment/github-pages): Base paths, 404 fallback, Actions, and static-only limits.
+- [Framework deployment recipes](https://hussain-ahmed2.github.io/react-threaded/docs/deployment/recipes): Exact platform configurations for eight frameworks.
+
+## Examples
+
+- [Playground](https://hussain-ahmed2.github.io/react-threaded/playground): Live cancellation, transferable, pool, shared-memory, proxy, retry, and plugin demos.
+- [Examples](https://hussain-ahmed2.github.io/react-threaded/examples): Runnable React worker examples.
+
+## Optional
+
+- [Full LLM context](https://hussain-ahmed2.github.io/react-threaded/llms-full.txt): Expanded deployment matrix, configuration rules, and code contracts.
+- [Sitemap](https://hussain-ahmed2.github.io/react-threaded/sitemap.xml)

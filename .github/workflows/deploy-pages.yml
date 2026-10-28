@@ -40,10 +40,8 @@ jobs:
         env:
           DEMO_BASE: /${{ github.event.repository.name }}/
 
-      - name: Add GitHub Pages fallback
-        run: |
-          cp apps/demo/dist/index.html apps/demo/dist/404.html
-          touch apps/demo/dist/.nojekyll
+      - name: Add GitHub Pages metadata
+        run: touch apps/demo/dist/.nojekyll
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

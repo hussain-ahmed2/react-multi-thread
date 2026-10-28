@@ -113,8 +113,8 @@ persistent theme preference.
 
 The workflow at
 [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) runs on every push to
-`main`, verifies the workspace, builds the demo with `DEMO_BASE=/react-threaded/`, creates the SPA
-fallback, and deploys the artifact.
+`main`, verifies the workspace, builds the demo with `DEMO_BASE=/react-threaded/`, generates the
+route shells and sitemap, and deploys the artifact.
 
 Before the first run, open **Settings → Pages** in the GitHub repository and set the source to
 **GitHub Actions**. The workflow can then publish to:
@@ -132,8 +132,10 @@ To reproduce the Pages build locally:
 
 ```bash
 DEMO_BASE=/react-threaded/ pnpm build:demo
-cp apps/demo/dist/index.html apps/demo/dist/404.html
 ```
+
+The build writes per-route HTML shells, `404.html`, `sitemap.xml`, and the static SEO files. It also
+ships `llms.txt` and `llms-full.txt` for LLM tooling.
 
 ## Publishing
 

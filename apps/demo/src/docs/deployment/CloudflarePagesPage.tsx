@@ -9,9 +9,19 @@ export function CloudflarePagesPage() {
     <DocPage
       eyebrow="Deployment"
       title="Cloudflare Pages"
-      lede="Serve the static build from Pages and use the special _headers and _redirects files. Workers are created in the browser; you do not need a Pages Function."
+      lede="This page covers the static Vite build on Pages. Cloudflare also runs Next.js, React Router, Astro, TanStack Start, Waku, and RedwoodSDK through Workers or Pages adapters; those need their own server configuration."
     >
-      <DocSection id="build" title="Build settings">
+      <DocSection id="frameworks" title="Framework deployments">
+        <p>
+          Keep <code>_headers</code> and <code>_redirects</code> for the static Vite build only. For
+          Next.js, use the OpenNext adapter (or vinext for new projects); React Router and TanStack
+          Start use the Cloudflare Vite plugin; Astro uses <code>@astrojs/cloudflare</code>; Waku and
+          RedwoodSDK deploy as Workers. See the{' '}
+          <Link to="/docs/deployment/recipes">framework deployment recipes</Link>.
+        </p>
+      </DocSection>
+
+      <DocSection id="build" title="Static Vite build settings">
         <ul>
           <li>Framework preset: Vite.</li>
           <li>

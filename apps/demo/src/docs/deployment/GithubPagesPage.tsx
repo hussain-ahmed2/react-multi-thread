@@ -27,18 +27,23 @@ export function GithubPagesPage() {
         </p>
       </DocSection>
 
-      <DocSection id="fallback" title="Deep links need a 404 fallback">
+      <DocSection id="fallback" title="Deep links and generated shells">
         <p>
-          Pages serves <code>404.html</code> for unknown paths. Copy the built shell there so a deep
-          link boots the SPA instead of showing GitHub&apos;s 404 page:
+          Pages serves <code>404.html</code> for unknown paths. The demo build script writes a
+          route-aware <code>404.html</code>, and it also writes static shells for every documentation
+          route:
         </p>
         <CodeBlock
-          code={`cp apps/demo/dist/index.html apps/demo/dist/404.html`}
-          title="post-build"
+          code={`apps/demo/dist/index.html
+apps/demo/dist/404.html
+apps/demo/dist/docs/api/index.html
+apps/demo/dist/sitemap.xml`}
+          title="build output"
         />
         <p>
-          BrowserRouter then reads the original URL. Because the build used the repository base, the
-          asset URLs still resolve from the 404 page.
+          BrowserRouter reads the original URL when a shell or the 404 file boots. Because the build
+          used the repository base, asset URLs still resolve from nested routes and from the 404
+          page.
         </p>
       </DocSection>
 
@@ -51,7 +56,7 @@ export function GithubPagesPage() {
           </a>
           . Enable Pages with <strong>GitHub Actions</strong> as the source before the first deploy.
           The workflow installs the workspace, verifies the library and demo, builds with the
-          repository base, creates the 404 fallback, and publishes the artifact.
+          repository base, generates the route shells and sitemap, and publishes the artifact.
         </p>
       </DocSection>
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { usePageMetadata } from './seo'
 import { SiteFooter } from './SiteFooter'
 import { SiteHeader } from './SiteHeader'
 
@@ -15,6 +16,8 @@ function ScrollToTop() {
 }
 
 export function SiteLayout() {
+  usePageMetadata()
+
   return (
     <div className="site">
       <a className="skip-link" href="#main">

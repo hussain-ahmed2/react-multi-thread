@@ -183,6 +183,33 @@ export const vercelConfigCode = `{
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }`
 
+export const nextNetlifyConfigCode = `# netlify.toml (Next.js runtime)
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"`
+
+export const nextNetlifyHeadersCode = `// next.config.ts
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+        ],
+      },
+    ]
+  },
+}
+
+export default nextConfig`
+
 export const netlifyConfigCode = `# netlify.toml (static SPA output)
 [build]
   command = "pnpm build"
@@ -237,9 +264,7 @@ jobs:
       - run: pnpm verify
         env:
           DEMO_BASE: /\${{ github.event.repository.name }}/
-      - run: |
-          cp apps/demo/dist/index.html apps/demo/dist/404.html
-          touch apps/demo/dist/.nojekyll
+      - run: touch apps/demo/dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

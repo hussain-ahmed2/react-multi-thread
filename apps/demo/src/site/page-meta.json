@@ -1,0 +1,124 @@
+{
+  "siteUrl": "https://hussain-ahmed2.github.io/react-threaded",
+  "siteName": "react-threaded",
+  "ogImage": "/og-image.png",
+  "lastModified": "2026-10-28",
+  "pages": {
+    "/": {
+      "title": "react-threaded — Typed Web Workers for React",
+      "description": "Typed Web Workers for React with hooks, hard cancellation, worker pools, shared atomics, plugins, and Comlink-style proxies. Zero runtime dependencies.",
+      "kind": "website"
+    },
+    "/playground": {
+      "title": "Worker playground — react-threaded",
+      "description": "Run live typed-worker demos for cancellation, transferables, worker pools, shared memory, proxies, retries, and plugins.",
+      "kind": "website"
+    },
+    "/examples": {
+      "title": "Examples — react-threaded",
+      "description": "Working React worker examples: hashing, image processing, fan-out pools, shared counters, typed method proxies, and retry plugins.",
+      "kind": "website"
+    },
+    "/docs": {
+      "title": "Documentation — react-threaded",
+      "description": "Install react-threaded, learn its execution and memory model, browse the API, and deploy typed Web Workers to any React framework.",
+      "kind": "article"
+    },
+    "/docs/getting-started": {
+      "title": "Getting started — react-threaded",
+      "description": "Install react-threaded and run your first typed Web Worker in React with createWorker, useWorker, progress, cancellation, and cleanup.",
+      "kind": "article"
+    },
+    "/docs/concepts": {
+      "title": "Core concepts — react-threaded",
+      "description": "Understand react-threaded's Blob worker execution model, structured clone boundaries, cancellation, transferables, pools, and shared memory.",
+      "kind": "article"
+    },
+    "/docs/api": {
+      "title": "API reference — react-threaded",
+      "description": "Complete react-threaded API reference for createWorker, useWorker, worker pools, shared atoms, plugins, proxies, types, and utilities.",
+      "kind": "article"
+    },
+    "/docs/frameworks/vite": {
+      "title": "React + Vite setup — react-threaded",
+      "description": "Use react-threaded with Vite and React, including dev server headers, production preview isolation, and static deployment.",
+      "kind": "article"
+    },
+    "/docs/frameworks/nextjs": {
+      "title": "Next.js App Router setup — react-threaded",
+      "description": "Use react-threaded inside Next.js Client Components, configure COOP and COEP headers, and keep Server Components out of the worker.",
+      "kind": "article"
+    },
+    "/docs/frameworks/react-router": {
+      "title": "React Router setup — react-threaded",
+      "description": "Use react-threaded with React Router in SPA, data, or framework mode, including SSR boundaries, basenames, and deployment adapters.",
+      "kind": "article"
+    },
+    "/docs/frameworks/astro": {
+      "title": "Astro setup — react-threaded",
+      "description": "Hydrate React islands that own typed Web Workers in Astro, with dev headers and static or on-demand deployment guidance.",
+      "kind": "article"
+    },
+    "/docs/frameworks/tanstack-start": {
+      "title": "TanStack Start setup — react-threaded",
+      "description": "Use react-threaded with TanStack Start client routes, selective SSR, server functions, and static or full-stack deployment.",
+      "kind": "article"
+    },
+    "/docs/frameworks/waku": {
+      "title": "Waku setup — react-threaded",
+      "description": "Use react-threaded behind a client boundary in Waku React Server Components, with server adapters and static deployment notes.",
+      "kind": "article"
+    },
+    "/docs/frameworks/redwood-sdk": {
+      "title": "RedwoodSDK setup — react-threaded",
+      "description": "Use react-threaded with RedwoodSDK React Server Components on Cloudflare Workers, keeping worker hooks in client components.",
+      "kind": "article"
+    },
+    "/docs/frameworks/gatsby": {
+      "title": "Gatsby setup — react-threaded",
+      "description": "Use react-threaded in hydrated Gatsby pages, configure headers for shared memory, and deploy the static output to any host.",
+      "kind": "article"
+    },
+    "/docs/deployment": {
+      "title": "Deployment overview — react-threaded",
+      "description": "Deploy typed Web Workers and React apps: COOP/COEP headers, SPA fallbacks, caching, MIME types, and platform compatibility.",
+      "kind": "article"
+    },
+    "/docs/deployment/vercel": {
+      "title": "Vercel deployment — react-threaded",
+      "description": "Deploy react-threaded on Vercel with vercel.json headers, SPA rewrites for Vite, and framework-native adapters for SSR.",
+      "kind": "article"
+    },
+    "/docs/deployment/netlify": {
+      "title": "Netlify deployment — react-threaded",
+      "description": "Deploy react-threaded on Netlify with netlify.toml, COOP and COEP headers, SPA redirects, and framework adapters such as Next.js.",
+      "kind": "article"
+    },
+    "/docs/deployment/cloudflare-pages": {
+      "title": "Cloudflare deployment — react-threaded",
+      "description": "Deploy react-threaded to Cloudflare Pages or Workers with _headers, _redirects, Wrangler, and framework-specific adapters.",
+      "kind": "article"
+    },
+    "/docs/deployment/github-pages": {
+      "title": "GitHub Pages deployment — react-threaded",
+      "description": "Deploy the react-threaded demo or a static React app to GitHub Pages with base paths, 404 fallbacks, and Actions.",
+      "kind": "article"
+    },
+    "/docs/deployment/recipes": {
+      "title": "Framework deployment recipes — react-threaded",
+      "description": "Exact deployment configurations for Next.js, React Router, Vite, Astro, TanStack Start, Waku, RedwoodSDK, and Gatsby on Vercel, Netlify, Cloudflare, and GitHub Pages.",
+      "kind": "article"
+    },
+    "/docs/troubleshooting": {
+      "title": "Troubleshooting — react-threaded",
+      "description": "Fix SharedArrayBuffer, cross-origin isolation, CSP, SSR, worker serialization, cancellation, and deployment issues in react-threaded.",
+      "kind": "article"
+    },
+    "/404": {
+      "title": "Page not found — react-threaded",
+      "description": "The requested page could not be found in the react-threaded documentation.",
+      "kind": "website",
+      "noindex": true
+    }
+  }
+}

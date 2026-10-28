@@ -9,9 +9,18 @@ export function VercelPage() {
     <DocPage
       eyebrow="Deployment"
       title="Vercel"
-      lede="Deploy the static build with a Vercel project. Add headers and a rewrite in vercel.json; no serverless function is involved."
+      lede="This page covers the static Vite demo. Vercel also runs Next.js natively and has presets for React Router and Nitro-based TanStack Start; those must not reuse the SPA rewrite below."
     >
-      <DocSection id="project" title="Project settings">
+      <DocSection id="frameworks" title="Next.js and other frameworks">
+        <p>
+          Vercel is the native runtime for Next.js. Keep COOP/COEP in <code>next.config.ts</code>{' '}
+          <code>headers()</code> and do not add a catch-all rewrite. React Router framework mode
+          uses <code>@vercel/react-router</code>; TanStack Start deploys its Nitro output. See the{' '}
+          <Link to="/docs/deployment/recipes">framework deployment recipes</Link> for exact files.
+        </p>
+      </DocSection>
+
+      <DocSection id="project" title="Static Vite project settings">
         <ul>
           <li>Framework preset: Vite.</li>
           <li>Root directory: the repository root (the demo lives in a pnpm workspace).</li>

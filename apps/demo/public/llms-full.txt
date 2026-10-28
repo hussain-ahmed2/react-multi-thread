@@ -1,0 +1,199 @@
+# react-threaded — full LLM context
+
+> Typed Web Workers for React: React hooks, hard cancellation, worker pools, shared atomics, plugins, and Comlink-style method proxies. Zero runtime dependencies.
+
+Canonical site: https://hussain-ahmed2.github.io/react-threaded/
+Source: https://github.com/hussain-ahmed2/react-threaded
+Package: https://www.npmjs.com/package/react-threaded
+License: MIT
+
+## What it is
+
+react-threaded runs typed functions in browser Web Workers. The runtime and handler are serialized into a Blob URL, so consumers do not create a separate worker entry file and there is no worker MIME or bundler path to configure.
+
+Main features:
+
+- `createWorker` for a typed one-method worker.
+- `useWorker` for React state, progress, results, errors, and cancellation.
+- `cancel({ mode: 'terminate' })` for immediate hard cancellation.
+- `cancel({ mode: 'cooperative' })` for task-defined checkpoints.
+- `useWorkerPool` for bounded fan-out and backpressure.
+- `createSharedAtom` and `useSharedAtom` for cross-worker atomic counters.
+- `createWorker` method maps and `useWorkerProxy` for typed multi-method workers.
+- Plugin hooks for retry, logging, timing, and lifecycle behavior.
+- Structured-clone-safe transferables for ownership transfer.
+- Full TypeScript inference for input, output, progress, and errors.
+
+## Requirements
+
+- React 18 or newer.
+- TypeScript 5 or newer for the best inference.
+- A modern browser with Web Workers.
+- HTTPS or localhost for production and local development.
+- Cross-origin isolation only for `SharedArrayBuffer` and shared atoms.
+
+## Execution and memory contract
+
+- A worker function must be self-contained. It cannot close over module state or call imported functions unless those values are passed in.
+- Inputs and outputs cross a structured-clone boundary. Functions, DOM nodes, class instances without clone support, and React elements cannot be sent.
+- `ArrayBuffer` can be copied or transferred. Transferring detaches the sender's buffer.
+- Cancellation in terminate mode destroys the current worker and respawns it on the next run.
+- Shared atoms use a `SharedArrayBuffer` plus `Atomics`. They require cross-origin isolation.
+- A shared atom falls back to local mode when isolation is unavailable.
+- Inline Blob workers require CSP `worker-src blob:`. `unsafe-eval` is not required.
+- Use worker hooks only in Client Components or client-only React islands. Server rendering cannot create a Worker.
+
+## Cross-origin isolation
+
+Required response headers for shared memory:
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Verify:
+
+```js
+console.log({ isolated: crossOriginIsolated, sab: typeof SharedArrayBuffer })
+```
+
+COEP `require-corp` blocks third-party resources that do not opt in with CORP or CORS. If shared memory is not needed, omit both headers.
+
+GitHub Pages cannot set response headers. It always reports `crossOriginIsolated === false`.
+
+## Deployment compatibility matrix
+
+| Framework | Vercel | Netlify | Cloudflare | GitHub Pages |
+| --- | --- | --- | --- | --- |
+| Next.js | Native server | Server adapter (OpenNext) | Server adapter (OpenNext; vinext is the new-project path) | Static export only |
+| React Router framework mode | Server adapter (`@vercel/react-router`) | Server adapter (`@netlify/vite-plugin-react-router`) | Server adapter (Cloudflare Vite plugin) | Static SPA only |
+| React + Vite | Static | Static | Static | Static |
+| Astro | Static or adapter | Static or adapter | Static or adapter | Static only |
+| TanStack Start | Server adapter (Nitro) | Server adapter (Netlify plugin) | Server adapter (Cloudflare Vite plugin) | Static SPA only |
+| Waku | Server adapter | Server adapter | Server adapter | Static only, no SPA fallback |
+| RedwoodSDK | Not supported | Not supported | Native Workers | Not supported |
+| Gatsby | Static | Static | Static | Static only |
+
+## Routing rules
+
+- A catch-all rewrite `/* -> /index.html` is correct only for client-rendered apps.
+- Vite React apps and React Router SPA mode need a rewrite or `404.html` fallback for deep links.
+- Next.js, Waku, RedwoodSDK, TanStack Start server mode, and React Router framework mode must not receive a blanket static rewrite.
+- Static exports can use generated per-route HTML shells and a `404.html`.
+- GitHub project pages need a base path such as `/repository-name/` in both the bundler and the router.
+- GitHub Pages serves a directory `index.html` for paths with a trailing slash.
+- A static SPA fallback on GitHub Pages is a `404.html` file that boots the app.
+
+## Framework notes
+
+### Next.js
+
+- Put all worker hooks in files with `'use client'`.
+- Do not call worker hooks in Server Components.
+- Define COOP/COEP in `next.config.ts` with `headers()`.
+- Netlify: publish `.next`; Netlify installs its current OpenNext adapter automatically.
+- Netlify: do not add `/* -> /index.html` and do not pin an old adapter plugin.
+- Vercel: native Next.js runtime; do not add an SPA rewrite.
+- Cloudflare: use `@opennextjs/cloudflare`; Cloudflare recommends vinext for new Next.js projects.
+- GitHub Pages: use `output: 'export'`, `images.unoptimized`, and `basePath` from `PAGES_BASE_PATH`; `headers()` and rewrites are ignored.
+
+### React Router
+
+- SPA mode uses `ssr: false`; framework mode uses `ssr: true`.
+- Vercel preset: `@vercel/react-router/vite` with `vercelPreset()`.
+- Netlify: `@netlify/vite-plugin-react-router`.
+- Cloudflare: `@cloudflare/vite-plugin`; React Router v7 needs the unstable Vite environment API; SPA mode and prerender are not supported through this plugin.
+- GitHub Pages: set Vite `base`, React Router `basename`, and copy `index.html` to `404.html`.
+
+### React + Vite
+
+- Vite `server.headers` and `preview.headers` cover local development only.
+- Static hosts need the headers repeated in `vercel.json`, `netlify.toml`, or `_headers`.
+- Vercel and Netlify use a rewrite for BrowserRouter deep links.
+- Cloudflare Pages uses `_redirects`.
+- GitHub Pages uses a `404.html` shell and has no custom headers.
+
+### Astro
+
+- Static by default.
+- Add `@astrojs/vercel`, `@astrojs/netlify`, or `@astrojs/cloudflare` only for on-demand rendering.
+- Islands that own workers need `client:load` or another client directive.
+- Top-level `server.headers` covers dev and preview; production hosts need their own header configuration.
+- GitHub Pages can only host static output.
+
+### TanStack Start
+
+- Default output is a server application.
+- Vercel uses Nitro.
+- Netlify uses `@netlify/vite-plugin-tanstack-start`.
+- Cloudflare uses `@cloudflare/vite-plugin` and `main: "@tanstack/react-start/server-entry"`.
+- GitHub Pages requires SPA mode and `_shell.html` served as `404.html`.
+
+### Waku
+
+- Waku is a React Server Components framework.
+- Server adapters: `waku/adapters/vercel`, `waku/adapters/netlify`, `waku/adapters/cloudflare`.
+- Netlify builds with `NETLIFY=1`.
+- Cloudflare builds with `CLOUDFLARE=1`, outputs `dist/worker.js`, and serves `dist/public`.
+- Fully static output lives in `dist/public`.
+- GitHub Pages can host only the static output and must not use an SPA fallback.
+
+### RedwoodSDK
+
+- RedwoodSDK is Cloudflare Workers only.
+- Use Cloudflare Workers and `pnpm release` or Wrangler.
+- Vercel, Netlify, and GitHub Pages are not supported deployment targets.
+
+### Gatsby
+
+- Static output lives in `public`.
+- No SPA catch-all rewrite is required.
+- GitHub Pages uses `pathPrefix` and `gatsby build --prefix-paths`.
+- GitHub Pages cannot set COOP or COEP.
+
+## API surface
+
+Import from `react-threaded`:
+
+- `createWorker`
+- `useWorker`
+- `createWorkerPool`
+- `useWorkerPool`
+- `createSharedAtom`
+- `useSharedAtom`
+- `useWorkerProxy`
+- `isSharedMemoryAvailable`
+- Worker error classes and public types
+
+Refer to the API page for exact signatures and examples:
+
+https://hussain-ahmed2.github.io/react-threaded/docs/api
+
+## Common failure causes
+
+- `SharedArrayBuffer is not defined`: the document is not cross-origin isolated, or the browser or host does not provide SAB. Use COOP/COEP or the local atom fallback.
+- Worker creation blocked: CSP does not allow `worker-src blob:`.
+- Deep link returns 404: missing SPA fallback or framework server route.
+- Server render crashes: a worker hook ran during SSR or in a Server Component.
+- Data clone error: the payload contains a function, DOM node, or unsupported class instance.
+- Worker function fails at runtime: it closes over module state or calls an import that is not available inside the Blob worker.
+- Headers work in dev but not production: the framework dev server applied them, but the static host did not.
+- GitHub Pages deep link works only from the home page: missing base path, missing `404.html`, or the router basename does not match the repository path.
+
+## Source layout
+
+- `packages/react-threaded`: library source, tests, and package build.
+- `apps/demo`: Vite React demo, documentation site, playground, static SEO assets, and Pages build script.
+- `.github/workflows/deploy-pages.yml`: verification, build, and GitHub Pages deployment.
+
+## Related pages
+
+- https://hussain-ahmed2.github.io/react-threaded/docs
+- https://hussain-ahmed2.github.io/react-threaded/docs/getting-started
+- https://hussain-ahmed2.github.io/react-threaded/docs/concepts
+- https://hussain-ahmed2.github.io/react-threaded/docs/api
+- https://hussain-ahmed2.github.io/react-threaded/docs/deployment/recipes
+- https://hussain-ahmed2.github.io/react-threaded/docs/troubleshooting
+- https://hussain-ahmed2.github.io/react-threaded/playground
+- https://hussain-ahmed2.github.io/react-threaded/examples

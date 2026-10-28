@@ -2364,6 +2364,43 @@ html.dark .prose a {
   font-size: 0.95rem;
 }
 
+.recipe {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.recipe:first-of-type {
+  margin-top: 1.5rem;
+}
+
+.recipe--unsupported {
+  border-style: dashed;
+}
+
+.recipe__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.recipe__head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.recipe p {
+  margin-top: 0.65rem;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+
+.recipe .code-block {
+  margin-top: 0.9rem;
+}
+
 .prose-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

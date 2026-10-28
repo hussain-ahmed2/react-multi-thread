@@ -1,0 +1,23 @@
+{
+  "name": "react-threaded",
+  "short_name": "react-threaded",
+  "description": "Typed Web Workers for React with hooks, cancellation, worker pools, shared atomics, plugins, and Comlink-style proxies.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#fbfaf6",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

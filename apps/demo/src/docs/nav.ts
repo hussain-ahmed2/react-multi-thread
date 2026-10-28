@@ -113,6 +113,11 @@ export const docGroups: readonly DocGroup[] = [
         to: '/docs/deployment/github-pages',
         summary: 'Base paths, 404 fallback, and no custom headers.',
       },
+      {
+        label: 'Framework recipes',
+        to: '/docs/deployment/recipes',
+        summary: 'Exact framework and platform configurations.',
+      },
     ],
   },
   {

@@ -15,6 +15,7 @@ import { VitePage } from './docs/frameworks/VitePage'
 import { WakuPage } from './docs/frameworks/WakuPage'
 import { CloudflarePagesPage } from './docs/deployment/CloudflarePagesPage'
 import { DeploymentOverviewPage } from './docs/deployment/DeploymentOverviewPage'
+import { DeploymentRecipesPage } from './docs/deployment/DeploymentRecipesPage'
 import { GithubPagesPage } from './docs/deployment/GithubPagesPage'
 import { NetlifyPage } from './docs/deployment/NetlifyPage'
 import { VercelPage } from './docs/deployment/VercelPage'
@@ -50,6 +51,7 @@ export function App() {
           <Route path="deployment/netlify" element={<NetlifyPage />} />
           <Route path="deployment/cloudflare-pages" element={<CloudflarePagesPage />} />
           <Route path="deployment/github-pages" element={<GithubPagesPage />} />
+          <Route path="deployment/recipes" element={<DeploymentRecipesPage />} />
           <Route path="troubleshooting" element={<TroubleshootingPage />} />
         </Route>
 
