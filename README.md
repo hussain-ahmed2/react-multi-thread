@@ -26,7 +26,7 @@ demo to Netlify, Vercel, or Cloudflare Pages with the COOP/COEP headers document
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22.13+
 - pnpm 11 (`corepack enable` will pick up the pinned `packageManager`)
 
 ## Getting started

@@ -14,7 +14,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.15.1",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "pnpm --filter @react-threaded/demo dev",
