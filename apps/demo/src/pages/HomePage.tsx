@@ -296,7 +296,7 @@ export function HomePage() {
               <span className="eyebrow">Live, not a video</span>
               <h2 className="section__title">Break it in the playground.</h2>
               <p className="section__lede">
-                Seven real workloads run against the package source: a canvas swarm, cooperative
+                Seven real workloads run against the package source: a canvas action game, cooperative
                 cancellation, a 100-million-number sieve, transferables, a four-worker pool, shared
                 atomics, and retry plugins.
               </p>

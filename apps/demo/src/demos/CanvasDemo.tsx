@@ -6,17 +6,22 @@ import { RocketIcon } from '../components/Icons'
 import { Stat } from '../components/Stat'
 import { StatusBadge } from '../components/StatusBadge'
 import {
-  SWARM_HEIGHT,
-  SWARM_WIDTH,
-  createSwarm,
-  drawSwarm,
-  stepSwarm,
-} from './swarm-simulation'
-import type { SwarmChunkInput } from '../workers/definitions'
-import { swarmChunkWorker } from '../workers/definitions'
+  ARENA_HEIGHT,
+  ARENA_WIDTH,
+  createArena,
+  drawArena,
+  resetArena,
+  stepArena,
+  stepArenaControls,
+  stepArenaProjectiles,
+} from './arena-simulation'
+import type { ArenaState } from './arena-simulation'
+import type { ArenaChunkInput } from '../workers/definitions'
+import { arenaChunkWorker } from '../workers/definitions'
 
-const counts = [1_200, 2_400, 4_000, 6_000] as const
+const counts = [1_200, 2_400, 3_600, 4_800] as const
 const poolSizes = [1, 2, 4, 8] as const
+const defaultCount = counts[1]
 
 type Engine = 'pool' | 'main'
 
@@ -24,56 +29,72 @@ type Metrics = {
   readonly fps: number
   readonly uiFps: number
   readonly simulationMs: number
+  readonly enemies: number
 }
 
-const emptyMetrics: Metrics = { fps: 0, uiFps: 0, simulationMs: 0 }
+const emptyMetrics: Metrics = { fps: 0, uiFps: 0, simulationMs: 0, enemies: 0 }
 
-const source = `const swarmChunk = createWorker(({ buffer, count, start, end, ...input }) => {
-  const boids = new Float32Array(buffer)
+const source = `const arenaChunk = createWorker(({ buffer, count, start, end, ...input }) => {
+  const enemies = new Float32Array(buffer)
   const output = new Float32Array((end - start) * 4)
-  let checks = 0
 
   for (let i = start; i < end; i += 1) {
-    const offset = i * 4
+    const offset = i * 6
+    const x = enemies[offset]
+    const y = enemies[offset + 1]
+    let separationX = 0
+    let separationY = 0
 
     for (let j = 0; j < count; j += 1) {
       if (i === j) continue
-      checks += 1
 
-      // alignment, cohesion, separation, edges, pointer repel...
+      const dx = enemies[j * 6] - x
+      const dy = enemies[j * 6 + 1] - y
+      const distance = dx * dx + dy * dy
+
+      if (distance > 0 && distance < 26 * 26) {
+        const inverse = 1 / Math.sqrt(distance)
+        separationX -= dx * inverse
+        separationY -= dy * inverse
+      }
     }
 
-    // write nextX / nextY / nextVx / nextVy into output...
+    // chase the player, add separation, write the next x / y / vx / vy...
   }
 
-  return { buffer: output.buffer, checks }
+  return { buffer: output.buffer }
 })
 
-let boids = new Float32Array(count * 4)
-const pool = useWorkerPool(swarmChunk, { size: 4 })
+const pool = useWorkerPool(arenaChunk, { size: 4 })
 const chunks = Array.from({ length: 4 }, (_, index) => ({
   start: Math.floor((count * index) / 4),
   end: Math.floor((count * (index + 1)) / 4),
 }))
 
 const results = await pool.map(chunks.map(({ start, end }) => ({
-  buffer: boids.buffer,
+  buffer: enemies.buffer,
   count,
   width,
   height,
-  pointerX,
-  pointerY,
+  playerX,
+  playerY,
   dt: 1 / 60,
   start,
   end,
 })))
 
-const next = new Float32Array(count * 4)
 results.forEach((result, index) => {
-  next.set(new Float32Array(result.buffer), chunks[index].start * 4)
-})
+  const view = new Float32Array(result.buffer)
+  const chunk = chunks[index]
 
-boids = next`
+  for (let i = 0; i < view.length / 4; i += 1) {
+    const target = (chunk.start + i) * 6
+    enemies[target] = view[i * 4]
+    enemies[target + 1] = view[i * 4 + 1]
+    enemies[target + 2] = view[i * 4 + 2]
+    enemies[target + 3] = view[i * 4 + 3]
+  }
+})`
 
 function formatNumber(value: number): string {
   return value.toLocaleString('en-US')
@@ -81,36 +102,34 @@ function formatNumber(value: number): string {
 
 export function CanvasDemo() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const boidsRef = useRef<Float32Array>(createSwarm(counts[2]))
-  const pointerRef = useRef<{ readonly x: number; readonly y: number } | null>(null)
+  const arenaRef = useRef<ArenaState | null>(null)
+
+  if (arenaRef.current === null) {
+    arenaRef.current = createArena(defaultCount)
+  }
+
+  const arena = arenaRef.current
+  const targetRef = useRef<{ readonly x: number; readonly y: number } | null>(null)
+  const pulseIdRef = useRef(0)
   const resetVersionRef = useRef(0)
   const [engine, setEngine] = useState<Engine>('pool')
-  const [boidCount, setBoidCount] = useState<number>(counts[2])
+  const [enemyCount, setEnemyCount] = useState<number>(defaultCount)
   const [poolSize, setPoolSize] = useState<number>(4)
   const [running, setRunning] = useState(false)
   const [metrics, setMetrics] = useState<Metrics>(emptyMetrics)
   const [heartbeat, setHeartbeat] = useState(0)
-  const pool = useWorkerPool(swarmChunkWorker, { size: poolSize })
+  const pool = useWorkerPool(arenaChunkWorker, { size: poolSize })
   const { map } = pool
 
-  const drawFrame = useCallback((trailAlpha = 0.28) => {
+  const drawFrame = useCallback(() => {
     const canvas = canvasRef.current
     if (canvas === null) return
 
     const context = canvas.getContext('2d')
     if (context === null) return
 
-    drawSwarm(
-      context,
-      boidsRef.current,
-      boidsRef.current.length / 4,
-      SWARM_WIDTH,
-      SWARM_HEIGHT,
-      pointerRef.current?.x ?? null,
-      pointerRef.current?.y ?? null,
-      trailAlpha,
-    )
-  }, [])
+    drawArena(context, arena)
+  }, [arena])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -146,9 +165,11 @@ export function CanvasDemo() {
   }, [drawFrame])
 
   useEffect(() => {
-    boidsRef.current = createSwarm(boidCount)
-    drawFrame(1)
-  }, [boidCount, drawFrame])
+    resetVersionRef.current += 1
+    resetArena(arena, enemyCount)
+    setMetrics(emptyMetrics)
+    drawFrame()
+  }, [enemyCount, arena, drawFrame])
 
   useEffect(() => {
     if (!running) return
@@ -160,6 +181,8 @@ export function CanvasDemo() {
     let simulationTotal = 0
     let uiFrames = 0
     let windowStartedAt = performance.now()
+    let lastStepAt = performance.now()
+    let lastPulseId = pulseIdRef.current
 
     const publishMetrics = (): void => {
       const now = performance.now()
@@ -171,6 +194,7 @@ export function CanvasDemo() {
         fps: (simulationFrames * 1000) / elapsed,
         uiFps: (uiFrames * 1000) / elapsed,
         simulationMs: simulationFrames === 0 ? 0 : simulationTotal / simulationFrames,
+        enemies: arena.enemyCount,
       })
 
       simulationFrames = 0
@@ -184,26 +208,53 @@ export function CanvasDemo() {
       simulationTotal += simulationMs
     }
 
+    const currentTarget = (): { readonly x: number; readonly y: number } =>
+      targetRef.current ?? { x: arena.playerX, y: arena.playerY }
+
+    const currentDt = (now: number): number => {
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastStepAt) / 1000))
+      lastStepAt = now
+      return dt
+    }
+
     const submitPoolFrame = (): void => {
       if (cancelled || inFlight) return
 
       inFlight = true
       const requestVersion = resetVersionRef.current
       const startedAt = performance.now()
-      const chunkSize = Math.ceil(boidCount / poolSize)
+      const now = startedAt
+      const dt = currentDt(now)
+      const target = currentTarget()
+      const pulse = pulseIdRef.current !== lastPulseId
+      lastPulseId = pulseIdRef.current
+
+      stepArenaControls(arena, target.x, target.y, pulse, dt)
+
+      if (arena.playerHp <= 0 || arena.enemyCount === 0) {
+        inFlight = false
+        stepArenaProjectiles(arena, dt)
+        const simulationMs = performance.now() - startedAt
+        drawFrame()
+        recordSimulation(simulationMs)
+        return
+      }
+
+      const count = arena.enemyCount
+      const chunkSize = Math.ceil(count / poolSize)
       const chunks = Array.from({ length: poolSize }, (_, index) => ({
         start: index * chunkSize,
-        end: Math.min(boidCount, (index + 1) * chunkSize),
+        end: Math.min(count, (index + 1) * chunkSize),
       })).filter((chunk) => chunk.start < chunk.end)
 
-      const inputs: SwarmChunkInput[] = chunks.map((chunk) => ({
-        buffer: boidsRef.current.buffer as ArrayBuffer,
-        count: boidCount,
-        width: SWARM_WIDTH,
-        height: SWARM_HEIGHT,
-        pointerX: pointerRef.current?.x ?? null,
-        pointerY: pointerRef.current?.y ?? null,
-        dt: 1 / 60,
+      const inputs: ArenaChunkInput[] = chunks.map((chunk) => ({
+        buffer: arena.enemies.buffer as ArrayBuffer,
+        count,
+        width: ARENA_WIDTH,
+        height: ARENA_HEIGHT,
+        playerX: arena.playerX,
+        playerY: arena.playerY,
+        dt,
         start: chunk.start,
         end: chunk.end,
       }))
@@ -214,22 +265,44 @@ export function CanvasDemo() {
 
           if (cancelled || requestVersion !== resetVersionRef.current) return
 
-          const next = new Float32Array(boidCount * 4)
-
           results.forEach((result, index) => {
             const chunk = chunks[index]
             if (chunk === undefined) return
 
-            next.set(new Float32Array(result.buffer), chunk.start * 4)
+            const view = new Float32Array(result.buffer)
+
+            for (let item = 0; item < view.length / 4; item += 1) {
+              const targetOffset = (chunk.start + item) * 6
+              const sourceOffset = item * 4
+
+              arena.enemies[targetOffset] = view[sourceOffset]!
+              arena.enemies[targetOffset + 1] = view[sourceOffset + 1]!
+              arena.enemies[targetOffset + 2] = view[sourceOffset + 2]!
+              arena.enemies[targetOffset + 3] = view[sourceOffset + 3]!
+            }
           })
 
-          boidsRef.current = next
+          stepArenaProjectiles(arena, dt)
+          const simulationMs = performance.now() - startedAt
           drawFrame()
-          recordSimulation(performance.now() - startedAt)
+          recordSimulation(simulationMs)
         })
         .catch(() => {
           inFlight = false
         })
+    }
+
+    const stepMainFrame = (): void => {
+      const startedAt = performance.now()
+      const dt = currentDt(startedAt)
+      const target = currentTarget()
+      const pulse = pulseIdRef.current !== lastPulseId
+      lastPulseId = pulseIdRef.current
+
+      stepArena(arena, target.x, target.y, pulse, dt)
+      const simulationMs = performance.now() - startedAt
+      drawFrame()
+      recordSimulation(simulationMs)
     }
 
     const loop = (): void => {
@@ -244,20 +317,7 @@ export function CanvasDemo() {
         return
       }
 
-      const startedAt = performance.now()
-
-      stepSwarm(
-        boidsRef.current,
-        boidCount,
-        SWARM_WIDTH,
-        SWARM_HEIGHT,
-        pointerRef.current?.x ?? null,
-        pointerRef.current?.y ?? null,
-        1 / 60,
-      )
-
-      drawFrame()
-      recordSimulation(performance.now() - startedAt)
+      stepMainFrame()
     }
 
     frameHandle = requestAnimationFrame(loop)
@@ -266,26 +326,39 @@ export function CanvasDemo() {
       cancelled = true
       cancelAnimationFrame(frameHandle)
     }
-  }, [running, engine, boidCount, poolSize, drawFrame, map])
+  }, [running, engine, poolSize, arena, drawFrame, map])
 
   const reset = (): void => {
     resetVersionRef.current += 1
-    boidsRef.current = createSwarm(boidCount)
+    resetArena(arena, enemyCount)
     setMetrics(emptyMetrics)
-    drawFrame(1)
+    drawFrame()
   }
 
-  const handlePointerMove = (event: ReactPointerEvent<HTMLCanvasElement>): void => {
+  const pulse = (): void => {
+    pulseIdRef.current += 1
+  }
+
+  const updateTarget = (event: ReactPointerEvent<HTMLCanvasElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
 
-    pointerRef.current = {
-      x: ((event.clientX - rect.left) / rect.width) * SWARM_WIDTH,
-      y: ((event.clientY - rect.top) / rect.height) * SWARM_HEIGHT,
+    targetRef.current = {
+      x: ((event.clientX - rect.left) / rect.width) * ARENA_WIDTH,
+      y: ((event.clientY - rect.top) / rect.height) * ARENA_HEIGHT,
     }
   }
 
+  const handlePointerMove = (event: ReactPointerEvent<HTMLCanvasElement>): void => {
+    updateTarget(event)
+  }
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>): void => {
+    updateTarget(event)
+    pulse()
+  }
+
   const handlePointerLeave = (): void => {
-    pointerRef.current = null
+    targetRef.current = null
   }
 
   const blocking = running && engine === 'main'
@@ -297,21 +370,21 @@ export function CanvasDemo() {
       <div className="demo__intro">
         <div className="demo__eyebrow">
           <RocketIcon width={16} height={16} />
-          Canvas + O(n²) neighbor search
+          Canvas action game + worker pool
         </div>
-        <h2>A game loop that can actually drop frames.</h2>
+        <h2>Neon Siege: keep the arena smooth under pressure.</h2>
         <p>
-          Every tick compares {formatNumber(boidCount)} boids against every other boid —{' '}
-          {formatNumber(boidCount * boidCount)} neighbor checks per frame — then steers them around
-          the cursor. Spread it across {poolSize} workers and the page keeps painting. Switch to
-          the main thread and the same loop fights React, input, and the browser for one CPU core.
+          {formatNumber(enemyCount)} enemies chase the player and separate from every other enemy —
+          that is {formatNumber(enemyCount * enemyCount)} steering checks per frame. The pool splits
+          the horde across {poolSize} workers while the main thread runs input, bullets, collisions,
+          and paint. Switch the same arena to the main thread and every dropped frame is felt.
         </p>
       </div>
 
       <div className="demo__grid demo__grid--sidebar">
         <div className="panel">
           <div className="panel__head">
-            <span className="panel__title">Simulation</span>
+            <span className="panel__title">Arena</span>
             <StatusBadge tone={statusTone} pulse={running}>
               {status}
             </StatusBadge>
@@ -337,8 +410,8 @@ export function CanvasDemo() {
             </div>
             <span className="field__hint">
               {engine === 'pool'
-                ? `The pool splits the neighbor search across ${poolSize} worker${poolSize === 1 ? '' : 's'}; the main thread merges and paints.`
-                : 'Calculation, React, and painting share one thread. Expect jank.'}
+                ? `Enemy steering runs across ${poolSize} worker${poolSize === 1 ? '' : 's'}; the main thread owns input, bullets, and paint.`
+                : 'Enemy steering, bullets, input, and paint share one thread. Expect the arena to fight the page.'}
             </span>
           </div>
 
@@ -361,14 +434,14 @@ export function CanvasDemo() {
           ) : null}
 
           <div className="field">
-            <span className="field__label">Boids</span>
-            <div className="segmented" role="group" aria-label="Boid count">
+            <span className="field__label">Enemies</span>
+            <div className="segmented" role="group" aria-label="Enemy count">
               {counts.map((option) => (
                 <button
                   key={option}
                   type="button"
-                  className={`segmented__item${option === boidCount ? ' is-active' : ''}`}
-                  onClick={() => setBoidCount(option)}
+                  className={`segmented__item${option === enemyCount ? ' is-active' : ''}`}
+                  onClick={() => setEnemyCount(option)}
                 >
                   {formatNumber(option)}
                 </button>
@@ -382,7 +455,10 @@ export function CanvasDemo() {
               className="button button--primary"
               onClick={() => setRunning((value) => !value)}
             >
-              {running ? 'Pause' : 'Start simulation'}
+              {running ? 'Pause' : 'Start game'}
+            </button>
+            <button type="button" className="button" onClick={pulse}>
+              Pulse
             </button>
             <button type="button" className="button" onClick={reset}>
               Reset
@@ -390,28 +466,29 @@ export function CanvasDemo() {
           </div>
 
           <p className="hint">
-            Move the pointer over the canvas to repel the swarm. The heartbeat uses a main-thread
-            timer, and UI FPS counts main-thread animation frames. Watch both collapse when the
-            simulation moves onto the main thread.
+            Move the pointer over the arena to steer. Click the canvas or press Pulse to fire a
+            shockwave. Auto-fire is always on. The heartbeat is a main-thread timer; UI FPS counts
+            main-thread animation frames. 2,400 enemies is the default; 4,800 is a stress test.
           </p>
         </div>
 
         <div className="stack">
-          <div className="swarm-stage">
+          <div className="arena-stage">
             <canvas
               ref={canvasRef}
-              className="swarm-canvas"
-              aria-label="Animated boid simulation"
+              className="arena-canvas"
+              aria-label="Neon Siege action game"
               onPointerMove={handlePointerMove}
+              onPointerDown={handlePointerDown}
               onPointerLeave={handlePointerLeave}
             />
-            <div className="swarm-stage__hud">
-              <span className="swarm-pill">
+            <div className="arena-stage__hud">
+              <span className="arena-pill">
                 <i className={heartbeat % 2 === 0 ? 'is-on' : ''} aria-hidden="true" />
                 UI heartbeat {heartbeat}
               </span>
-              <span className="swarm-pill">
-                {metrics.fps === 0 ? 'sim idle' : `${Math.round(metrics.fps)} sim fps`}
+              <span className="arena-pill">
+                {metrics.fps === 0 ? 'arena idle' : `${Math.round(metrics.fps)} game fps`}
               </span>
             </div>
           </div>
@@ -450,15 +527,15 @@ export function CanvasDemo() {
 
               <p className="hint hint--tight">
                 {engine === 'pool'
-                  ? `Each worker returns a slice of the next frame; the main thread only merges ${poolSize} buffer${poolSize === 1 ? '' : 's'} and paints.`
-                  : 'The simulation runs inside requestAnimationFrame on the main thread. A slow frame delays input, React updates, and the next paint.'}
+                  ? `Each worker returns a slice of the next enemy positions; the main thread merges ${poolSize} buffer${poolSize === 1 ? '' : 's'}, updates bullets, and paints.`
+                  : 'Enemy steering runs inside requestAnimationFrame on the main thread. A slow frame delays input, bullets, React updates, and the next paint.'}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <CodeBlock code={source} title="CanvasSwarm.tsx" />
+      <CodeBlock code={source} title="NeonSiege.tsx" />
     </div>
   )
 }

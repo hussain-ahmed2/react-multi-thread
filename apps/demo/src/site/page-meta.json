@@ -11,12 +11,12 @@
     },
     "/playground": {
       "title": "Worker playground — react-threaded",
-      "description": "Run live typed-worker demos for a canvas swarm, cancellation, transferables, worker pools, shared memory, proxies, retries, and plugins.",
+      "description": "Run live typed-worker demos for a canvas action game, cancellation, transferables, worker pools, shared memory, proxies, retries, and plugins.",
       "kind": "website"
     },
     "/examples": {
       "title": "Examples — react-threaded",
-      "description": "Working React worker examples: canvas game loops, image processing, fan-out pools, shared counters, typed method proxies, and retry plugins.",
+      "description": "Working React worker examples: a canvas action game, image processing, fan-out pools, shared counters, typed method proxies, and retry plugins.",
       "kind": "website"
     },
     "/docs": {

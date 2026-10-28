@@ -4,34 +4,36 @@ import { ArrowIcon, ChevronRightIcon } from '../components/Icons'
 
 const examples = [
   {
-    id: 'canvas-swarm',
-    tag: 'Canvas + worker pool',
-    title: 'Run a canvas game loop off the main thread',
-    body: 'A boid swarm performs millions of neighbor checks per frame. A worker pool splits the boids into slices, computes the next positions in parallel, and returns transferred buffers; the main thread only merges and paints them.',
+    id: 'canvas-arena',
+    tag: 'Canvas action game',
+    title: 'Keep a heavy game loop off the main thread',
+    body: 'A neon arena spawns thousands of enemies that chase the player and separate from every other enemy. The worker pool computes enemy steering in slices; the main thread moves bullets, resolves collisions, and paints. The game stays responsive instead of fighting its own UI.',
     docs: { label: 'Worker pool reference', to: '/docs/api#pool' },
-    code: `const swarmChunk = createWorker(({ buffer, count, start, end }) => {
-  const boids = new Float32Array(buffer)
+    code: `const arenaChunk = createWorker(({ buffer, count, start, end, ...input }) => {
+  const enemies = new Float32Array(buffer)
   const output = new Float32Array((end - start) * 4)
-  let checks = 0
 
   for (let i = start; i < end; i += 1) {
-    const offset = i * 4
+    const offset = i * 6
+    const x = enemies[offset]
+    const y = enemies[offset + 1]
 
     for (let j = 0; j < count; j += 1) {
       if (i === j) continue
-      checks += 1
 
-      // alignment, cohesion, separation, edges, pointer repel...
+      const dx = enemies[j * 6] - x
+      const dy = enemies[j * 6 + 1] - y
+
+      // chase the player, add separation from nearby enemies...
     }
 
-    // write nextX / nextY / nextVx / nextVy into output...
+    // write next x / y / vx / vy...
   }
 
-  return { buffer: output.buffer, checks }
+  return { buffer: output.buffer }
 })
 
-let boids = new Float32Array(count * 4)
-const pool = useWorkerPool(swarmChunk, { size: 4 })
+const pool = useWorkerPool(arenaChunk, { size: 4 })
 const chunks = Array.from({ length: 4 }, (_, index) => ({
   start: Math.floor((count * index) / 4),
   end: Math.floor((count * (index + 1)) / 4),
@@ -39,21 +41,33 @@ const chunks = Array.from({ length: 4 }, (_, index) => ({
 
 async function frame() {
   const results = await pool.map(chunks.map(({ start, end }) => ({
-    buffer: boids.buffer,
+    buffer: enemies.buffer,
     count,
     width,
     height,
+    playerX,
+    playerY,
+    dt: 1 / 60,
     start,
     end,
   })))
 
-  const next = new Float32Array(count * 4)
   results.forEach((result, index) => {
-    next.set(new Float32Array(result.buffer), chunks[index].start * 4)
+    const view = new Float32Array(result.buffer)
+    const chunk = chunks[index]
+
+    for (let i = 0; i < view.length / 4; i += 1) {
+      const target = (chunk.start + i) * 6
+      enemies[target] = view[i * 4]
+      enemies[target + 1] = view[i * 4 + 1]
+      enemies[target + 2] = view[i * 4 + 2]
+      enemies[target + 3] = view[i * 4 + 3]
+    }
   })
 
-  boids = next
-  draw(boids)
+  moveBullets(arena)
+  resolveCollisions(arena)
+  draw(arena)
   requestAnimationFrame(() => void frame())
 }
 

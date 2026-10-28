@@ -222,163 +222,88 @@ export const mathWorker = createWorker({
 })
 
 /* -------------------------------------------------------------------------- */
-/* Canvas swarm                                                               */
+/* Canvas arena                                                               */
 /* -------------------------------------------------------------------------- */
 
-export type SwarmChunkInput = {
+export type ArenaChunkInput = {
   readonly buffer: ArrayBuffer
   readonly count: number
   readonly width: number
   readonly height: number
-  readonly pointerX: number | null
-  readonly pointerY: number | null
+  readonly playerX: number
+  readonly playerY: number
   readonly dt: number
   readonly start: number
   readonly end: number
 }
 
-export type SwarmChunkOutput = {
+export type ArenaChunkOutput = {
   readonly buffer: ArrayBuffer
-  readonly checks: number
   readonly simulationMs: number
 }
 
-export const swarmChunkWorker = createWorker(
-  (input: SwarmChunkInput): SwarmChunkOutput => {
+export const arenaChunkWorker = createWorker(
+  (input: ArenaChunkInput): ArenaChunkOutput => {
     const startedAt = performance.now()
-    const boids = new Float32Array(input.buffer)
+    const enemies = new Float32Array(input.buffer)
     const output = new Float32Array((input.end - input.start) * 4)
     const count = input.count
     const width = input.width
     const height = input.height
-    const pointerX = input.pointerX
-    const pointerY = input.pointerY
+    const playerX = input.playerX
+    const playerY = input.playerY
     const dt = input.dt
-    const stride = 4
-    const vision = 52
-    const visionSquared = vision * vision
-    const separationSquared = 20 * 20
-    const maxSpeed = 132
-    const maxForce = 118
-    const edge = 44
-    const pointerRadiusSquared = 118 * 118
-    let checks = 0
+    const stride = 6
+    const separation = 26
+    const separationSquared = separation * separation
 
     for (let index = input.start; index < input.end; index += 1) {
       const offset = index * stride
-      const x = boids[offset]!
-      const y = boids[offset + 1]!
-      const vx = boids[offset + 2]!
-      const vy = boids[offset + 3]!
-      let alignX = 0
-      let alignY = 0
-      let cohesionX = 0
-      let cohesionY = 0
+      let x = enemies[offset]!
+      let y = enemies[offset + 1]!
+      let vx = enemies[offset + 2]!
+      let vy = enemies[offset + 3]!
+      const kind = enemies[offset + 5]!
       let separationX = 0
       let separationY = 0
-      let neighbors = 0
 
       for (let otherIndex = 0; otherIndex < count; otherIndex += 1) {
         if (otherIndex === index) continue
 
         const otherOffset = otherIndex * stride
-        const dx = boids[otherOffset]! - x
-        const dy = boids[otherOffset + 1]! - y
+        const dx = enemies[otherOffset]! - x
+        const dy = enemies[otherOffset + 1]! - y
         const distanceSquared = dx * dx + dy * dy
 
-        checks += 1
+        if (distanceSquared === 0 || distanceSquared > separationSquared) continue
 
-        if (distanceSquared > visionSquared || distanceSquared === 0) continue
-
-        alignX += boids[otherOffset + 2]!
-        alignY += boids[otherOffset + 3]!
-        cohesionX += dx
-        cohesionY += dy
-        neighbors += 1
-
-        if (distanceSquared < separationSquared) {
-          const inverseDistance = 1 / Math.sqrt(distanceSquared)
-          separationX -= dx * inverseDistance
-          separationY -= dy * inverseDistance
-        }
+        const inverseDistance = 1 / Math.sqrt(distanceSquared)
+        separationX -= dx * inverseDistance
+        separationY -= dy * inverseDistance
       }
 
-      let accelerationX = 0
-      let accelerationY = 0
+      const dx = playerX - x
+      const dy = playerY - y
+      const distance = Math.hypot(dx, dy)
+      const speed = kind === 2 ? 28 : kind === 1 ? 74 : 46
+      const desiredX = (distance > 0 ? (dx / distance) * speed : 0) + separationX * 34
+      const desiredY = (distance > 0 ? (dy / distance) * speed : 0) + separationY * 34
+      const steer = Math.min(1, dt * 4.5)
 
-      if (neighbors > 0) {
-        accelerationX += (alignX / neighbors) * 1.15 + (cohesionX / neighbors) * 0.42
-        accelerationY += (alignY / neighbors) * 1.15 + (cohesionY / neighbors) * 0.42
-      }
+      vx += (desiredX - vx) * steer
+      vy += (desiredY - vy) * steer
+      x = Math.max(0, Math.min(width, x + vx * dt))
+      y = Math.max(0, Math.min(height, y + vy * dt))
 
-      accelerationX += separationX * 1.8
-      accelerationY += separationY * 1.8
-
-      if (x < edge) accelerationX += (edge - x) * 3.4
-      if (x > width - edge) accelerationX -= (x - (width - edge)) * 3.4
-      if (y < edge) accelerationY += (edge - y) * 3.4
-      if (y > height - edge) accelerationY -= (y - (height - edge)) * 3.4
-
-      if (pointerX !== null && pointerY !== null) {
-        const pointerDx = x - pointerX
-        const pointerDy = y - pointerY
-        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy
-
-        if (pointerDistanceSquared > 0 && pointerDistanceSquared < pointerRadiusSquared) {
-          const inverseDistance = 1 / Math.sqrt(pointerDistanceSquared)
-          const strength = (1 - pointerDistanceSquared / pointerRadiusSquared) * 620
-          accelerationX += pointerDx * inverseDistance * strength
-          accelerationY += pointerDy * inverseDistance * strength
-        }
-      }
-
-      const force = Math.hypot(accelerationX, accelerationY)
-
-      if (force > maxForce) {
-        const scale = maxForce / force
-        accelerationX *= scale
-        accelerationY *= scale
-      }
-
-      let nextVx = vx + accelerationX * dt
-      let nextVy = vy + accelerationY * dt
-      const speed = Math.hypot(nextVx, nextVy)
-
-      if (speed > maxSpeed) {
-        const scale = maxSpeed / speed
-        nextVx *= scale
-        nextVy *= scale
-      }
-
-      let nextX = x + nextVx * dt
-      let nextY = y + nextVy * dt
-
-      if (nextX < 0) {
-        nextX = 0
-        nextVx = Math.abs(nextVx)
-      } else if (nextX > width) {
-        nextX = width
-        nextVx = -Math.abs(nextVx)
-      }
-
-      if (nextY < 0) {
-        nextY = 0
-        nextVy = Math.abs(nextVy)
-      } else if (nextY > height) {
-        nextY = height
-        nextVy = -Math.abs(nextVy)
-      }
-
-      const outputOffset = (index - input.start) * stride
-      output[outputOffset] = nextX
-      output[outputOffset + 1] = nextY
-      output[outputOffset + 2] = nextVx
-      output[outputOffset + 3] = nextVy
+      const outputOffset = (index - input.start) * 4
+      output[outputOffset] = x
+      output[outputOffset + 1] = y
+      output[outputOffset + 2] = vx
+      output[outputOffset + 3] = vy
     }
 
     return {
       buffer: output.buffer,
-      checks,
       simulationMs: performance.now() - startedAt,
     }
   },

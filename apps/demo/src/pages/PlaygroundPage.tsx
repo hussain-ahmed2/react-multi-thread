@@ -26,7 +26,7 @@ type DemoTab = {
 }
 
 const demoTabs: readonly DemoTab[] = [
-  { id: 'canvas', label: 'Canvas swarm', icon: RocketIcon, Demo: CanvasDemo },
+  { id: 'canvas', label: 'Action game', icon: RocketIcon, Demo: CanvasDemo },
   { id: 'cancellation', label: 'Cancellation', icon: GaugeIcon, Demo: PrimeDemo },
   { id: 'transfer', label: 'Transferables', icon: BoltIcon, Demo: TransferDemo },
   { id: 'pools', label: 'Pools', icon: LayersIcon, Demo: PoolDemo },
