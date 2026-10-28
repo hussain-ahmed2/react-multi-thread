@@ -225,7 +225,7 @@ export const mathWorker = createWorker({
 /* Canvas swarm                                                               */
 /* -------------------------------------------------------------------------- */
 
-export type SwarmInput = {
+export type SwarmChunkInput = {
   readonly buffer: ArrayBuffer
   readonly count: number
   readonly width: number
@@ -233,147 +233,153 @@ export type SwarmInput = {
   readonly pointerX: number | null
   readonly pointerY: number | null
   readonly dt: number
+  readonly start: number
+  readonly end: number
 }
 
-export type SwarmOutput = {
+export type SwarmChunkOutput = {
   readonly buffer: ArrayBuffer
   readonly checks: number
   readonly simulationMs: number
 }
 
-export const swarmWorker = createWorker((input: SwarmInput): SwarmOutput => {
-  const startedAt = performance.now()
-  const boids = new Float32Array(input.buffer)
-  const count = input.count
-  const width = input.width
-  const height = input.height
-  const pointerX = input.pointerX
-  const pointerY = input.pointerY
-  const dt = input.dt
-  const stride = 4
-  const vision = 52
-  const visionSquared = vision * vision
-  const separationSquared = 20 * 20
-  const maxSpeed = 132
-  const maxForce = 118
-  const edge = 44
-  const pointerRadiusSquared = 118 * 118
-  let checks = 0
+export const swarmChunkWorker = createWorker(
+  (input: SwarmChunkInput): SwarmChunkOutput => {
+    const startedAt = performance.now()
+    const boids = new Float32Array(input.buffer)
+    const output = new Float32Array((input.end - input.start) * 4)
+    const count = input.count
+    const width = input.width
+    const height = input.height
+    const pointerX = input.pointerX
+    const pointerY = input.pointerY
+    const dt = input.dt
+    const stride = 4
+    const vision = 52
+    const visionSquared = vision * vision
+    const separationSquared = 20 * 20
+    const maxSpeed = 132
+    const maxForce = 118
+    const edge = 44
+    const pointerRadiusSquared = 118 * 118
+    let checks = 0
 
-  for (let index = 0; index < count; index += 1) {
-    const offset = index * stride
-    const x = boids[offset]!
-    const y = boids[offset + 1]!
-    const vx = boids[offset + 2]!
-    const vy = boids[offset + 3]!
-    let alignX = 0
-    let alignY = 0
-    let cohesionX = 0
-    let cohesionY = 0
-    let separationX = 0
-    let separationY = 0
-    let neighbors = 0
+    for (let index = input.start; index < input.end; index += 1) {
+      const offset = index * stride
+      const x = boids[offset]!
+      const y = boids[offset + 1]!
+      const vx = boids[offset + 2]!
+      const vy = boids[offset + 3]!
+      let alignX = 0
+      let alignY = 0
+      let cohesionX = 0
+      let cohesionY = 0
+      let separationX = 0
+      let separationY = 0
+      let neighbors = 0
 
-    for (let otherIndex = 0; otherIndex < count; otherIndex += 1) {
-      if (otherIndex === index) continue
+      for (let otherIndex = 0; otherIndex < count; otherIndex += 1) {
+        if (otherIndex === index) continue
 
-      const otherOffset = otherIndex * stride
-      const dx = boids[otherOffset]! - x
-      const dy = boids[otherOffset + 1]! - y
-      const distanceSquared = dx * dx + dy * dy
+        const otherOffset = otherIndex * stride
+        const dx = boids[otherOffset]! - x
+        const dy = boids[otherOffset + 1]! - y
+        const distanceSquared = dx * dx + dy * dy
 
-      checks += 1
+        checks += 1
 
-      if (distanceSquared > visionSquared || distanceSquared === 0) continue
+        if (distanceSquared > visionSquared || distanceSquared === 0) continue
 
-      alignX += boids[otherOffset + 2]!
-      alignY += boids[otherOffset + 3]!
-      cohesionX += dx
-      cohesionY += dy
-      neighbors += 1
+        alignX += boids[otherOffset + 2]!
+        alignY += boids[otherOffset + 3]!
+        cohesionX += dx
+        cohesionY += dy
+        neighbors += 1
 
-      if (distanceSquared < separationSquared) {
-        const inverseDistance = 1 / Math.sqrt(distanceSquared)
-        separationX -= dx * inverseDistance
-        separationY -= dy * inverseDistance
+        if (distanceSquared < separationSquared) {
+          const inverseDistance = 1 / Math.sqrt(distanceSquared)
+          separationX -= dx * inverseDistance
+          separationY -= dy * inverseDistance
+        }
       }
-    }
 
-    let accelerationX = 0
-    let accelerationY = 0
+      let accelerationX = 0
+      let accelerationY = 0
 
-    if (neighbors > 0) {
-      accelerationX += (alignX / neighbors) * 1.15 + (cohesionX / neighbors) * 0.42
-      accelerationY += (alignY / neighbors) * 1.15 + (cohesionY / neighbors) * 0.42
-    }
-
-    accelerationX += separationX * 1.8
-    accelerationY += separationY * 1.8
-
-    if (x < edge) accelerationX += (edge - x) * 3.4
-    if (x > width - edge) accelerationX -= (x - (width - edge)) * 3.4
-    if (y < edge) accelerationY += (edge - y) * 3.4
-    if (y > height - edge) accelerationY -= (y - (height - edge)) * 3.4
-
-    if (pointerX !== null && pointerY !== null) {
-      const pointerDx = x - pointerX
-      const pointerDy = y - pointerY
-      const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy
-
-      if (pointerDistanceSquared > 0 && pointerDistanceSquared < pointerRadiusSquared) {
-        const inverseDistance = 1 / Math.sqrt(pointerDistanceSquared)
-        const strength = (1 - pointerDistanceSquared / pointerRadiusSquared) * 620
-        accelerationX += pointerDx * inverseDistance * strength
-        accelerationY += pointerDy * inverseDistance * strength
+      if (neighbors > 0) {
+        accelerationX += (alignX / neighbors) * 1.15 + (cohesionX / neighbors) * 0.42
+        accelerationY += (alignY / neighbors) * 1.15 + (cohesionY / neighbors) * 0.42
       }
+
+      accelerationX += separationX * 1.8
+      accelerationY += separationY * 1.8
+
+      if (x < edge) accelerationX += (edge - x) * 3.4
+      if (x > width - edge) accelerationX -= (x - (width - edge)) * 3.4
+      if (y < edge) accelerationY += (edge - y) * 3.4
+      if (y > height - edge) accelerationY -= (y - (height - edge)) * 3.4
+
+      if (pointerX !== null && pointerY !== null) {
+        const pointerDx = x - pointerX
+        const pointerDy = y - pointerY
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy
+
+        if (pointerDistanceSquared > 0 && pointerDistanceSquared < pointerRadiusSquared) {
+          const inverseDistance = 1 / Math.sqrt(pointerDistanceSquared)
+          const strength = (1 - pointerDistanceSquared / pointerRadiusSquared) * 620
+          accelerationX += pointerDx * inverseDistance * strength
+          accelerationY += pointerDy * inverseDistance * strength
+        }
+      }
+
+      const force = Math.hypot(accelerationX, accelerationY)
+
+      if (force > maxForce) {
+        const scale = maxForce / force
+        accelerationX *= scale
+        accelerationY *= scale
+      }
+
+      let nextVx = vx + accelerationX * dt
+      let nextVy = vy + accelerationY * dt
+      const speed = Math.hypot(nextVx, nextVy)
+
+      if (speed > maxSpeed) {
+        const scale = maxSpeed / speed
+        nextVx *= scale
+        nextVy *= scale
+      }
+
+      let nextX = x + nextVx * dt
+      let nextY = y + nextVy * dt
+
+      if (nextX < 0) {
+        nextX = 0
+        nextVx = Math.abs(nextVx)
+      } else if (nextX > width) {
+        nextX = width
+        nextVx = -Math.abs(nextVx)
+      }
+
+      if (nextY < 0) {
+        nextY = 0
+        nextVy = Math.abs(nextVy)
+      } else if (nextY > height) {
+        nextY = height
+        nextVy = -Math.abs(nextVy)
+      }
+
+      const outputOffset = (index - input.start) * stride
+      output[outputOffset] = nextX
+      output[outputOffset + 1] = nextY
+      output[outputOffset + 2] = nextVx
+      output[outputOffset + 3] = nextVy
     }
 
-    const force = Math.hypot(accelerationX, accelerationY)
-
-    if (force > maxForce) {
-      const scale = maxForce / force
-      accelerationX *= scale
-      accelerationY *= scale
+    return {
+      buffer: output.buffer,
+      checks,
+      simulationMs: performance.now() - startedAt,
     }
-
-    let nextVx = vx + accelerationX * dt
-    let nextVy = vy + accelerationY * dt
-    const speed = Math.hypot(nextVx, nextVy)
-
-    if (speed > maxSpeed) {
-      const scale = maxSpeed / speed
-      nextVx *= scale
-      nextVy *= scale
-    }
-
-    let nextX = x + nextVx * dt
-    let nextY = y + nextVy * dt
-
-    if (nextX < 0) {
-      nextX = 0
-      nextVx = Math.abs(nextVx)
-    } else if (nextX > width) {
-      nextX = width
-      nextVx = -Math.abs(nextVx)
-    }
-
-    if (nextY < 0) {
-      nextY = 0
-      nextVy = Math.abs(nextVy)
-    } else if (nextY > height) {
-      nextY = height
-      nextVy = -Math.abs(nextVy)
-    }
-
-    boids[offset] = nextX
-    boids[offset + 1] = nextY
-    boids[offset + 2] = nextVx
-    boids[offset + 3] = nextVy
-  }
-
-  return {
-    buffer: boids.buffer,
-    checks,
-    simulationMs: performance.now() - startedAt,
-  }
-})
+  },
+)

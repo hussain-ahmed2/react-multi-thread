@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { useWorker } from 'react-threaded'
+import { useWorkerPool } from 'react-threaded'
 import { CodeBlock } from '../components/CodeBlock'
 import { RocketIcon } from '../components/Icons'
 import { Stat } from '../components/Stat'
@@ -12,12 +12,13 @@ import {
   drawSwarm,
   stepSwarm,
 } from './swarm-simulation'
-import type { SwarmInput } from '../workers/definitions'
-import { swarmWorker } from '../workers/definitions'
+import type { SwarmChunkInput } from '../workers/definitions'
+import { swarmChunkWorker } from '../workers/definitions'
 
-const counts = [1_200, 2_400, 4_000] as const
+const counts = [1_200, 2_400, 4_000, 6_000] as const
+const poolSizes = [1, 2, 4, 8] as const
 
-type Engine = 'worker' | 'main'
+type Engine = 'pool' | 'main'
 
 type Metrics = {
   readonly fps: number
@@ -27,11 +28,12 @@ type Metrics = {
 
 const emptyMetrics: Metrics = { fps: 0, uiFps: 0, simulationMs: 0 }
 
-const source = `const swarm = createWorker(({ buffer, count, width, height, ...input }) => {
+const source = `const swarmChunk = createWorker(({ buffer, count, start, end, ...input }) => {
   const boids = new Float32Array(buffer)
+  const output = new Float32Array((end - start) * 4)
   let checks = 0
 
-  for (let i = 0; i < count; i += 1) {
+  for (let i = start; i < end; i += 1) {
     const offset = i * 4
 
     for (let j = 0; j < count; j += 1) {
@@ -40,16 +42,21 @@ const source = `const swarm = createWorker(({ buffer, count, width, height, ...i
 
       // alignment, cohesion, separation, edges, pointer repel...
     }
+
+    // write nextX / nextY / nextVx / nextVy into output...
   }
 
-  return { buffer: boids.buffer, checks }
+  return { buffer: output.buffer, checks }
 })
 
 let boids = new Float32Array(count * 4)
-const worker = useWorker(swarm, { eager: true })
+const pool = useWorkerPool(swarmChunk, { size: 4 })
+const chunks = Array.from({ length: 4 }, (_, index) => ({
+  start: Math.floor((count * index) / 4),
+  end: Math.floor((count * (index + 1)) / 4),
+}))
 
-// Send a snapshot, then paint the returned buffer on the next animation frame.
-const result = await worker.run({
+const results = await pool.map(chunks.map(({ start, end }) => ({
   buffer: boids.buffer,
   count,
   width,
@@ -57,9 +64,16 @@ const result = await worker.run({
   pointerX,
   pointerY,
   dt: 1 / 60,
+  start,
+  end,
+})))
+
+const next = new Float32Array(count * 4)
+results.forEach((result, index) => {
+  next.set(new Float32Array(result.buffer), chunks[index].start * 4)
 })
 
-boids = new Float32Array(result.buffer)`
+boids = next`
 
 function formatNumber(value: number): string {
   return value.toLocaleString('en-US')
@@ -67,20 +81,17 @@ function formatNumber(value: number): string {
 
 export function CanvasDemo() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const boidsRef = useRef<Float32Array>(createSwarm(counts[1]))
+  const boidsRef = useRef<Float32Array>(createSwarm(counts[2]))
   const pointerRef = useRef<{ readonly x: number; readonly y: number } | null>(null)
   const resetVersionRef = useRef(0)
-  const [engine, setEngine] = useState<Engine>('worker')
-  const [boidCount, setBoidCount] = useState<number>(counts[1])
+  const [engine, setEngine] = useState<Engine>('pool')
+  const [boidCount, setBoidCount] = useState<number>(counts[2])
+  const [poolSize, setPoolSize] = useState<number>(4)
   const [running, setRunning] = useState(false)
   const [metrics, setMetrics] = useState<Metrics>(emptyMetrics)
   const [heartbeat, setHeartbeat] = useState(0)
-  const worker = useWorker(swarmWorker, { eager: true })
-  const runRef = useRef(worker.run)
-  const cancelRef = useRef(worker.cancel)
-
-  runRef.current = worker.run
-  cancelRef.current = worker.cancel
+  const pool = useWorkerPool(swarmChunkWorker, { size: poolSize })
+  const { map } = pool
 
   const drawFrame = useCallback((trailAlpha = 0.28) => {
     const canvas = canvasRef.current
@@ -173,13 +184,19 @@ export function CanvasDemo() {
       simulationTotal += simulationMs
     }
 
-    const submitWorkerFrame = (): void => {
+    const submitPoolFrame = (): void => {
       if (cancelled || inFlight) return
 
       inFlight = true
       const requestVersion = resetVersionRef.current
+      const startedAt = performance.now()
+      const chunkSize = Math.ceil(boidCount / poolSize)
+      const chunks = Array.from({ length: poolSize }, (_, index) => ({
+        start: index * chunkSize,
+        end: Math.min(boidCount, (index + 1) * chunkSize),
+      })).filter((chunk) => chunk.start < chunk.end)
 
-      const input: SwarmInput = {
+      const inputs: SwarmChunkInput[] = chunks.map((chunk) => ({
         buffer: boidsRef.current.buffer as ArrayBuffer,
         count: boidCount,
         width: SWARM_WIDTH,
@@ -187,18 +204,28 @@ export function CanvasDemo() {
         pointerX: pointerRef.current?.x ?? null,
         pointerY: pointerRef.current?.y ?? null,
         dt: 1 / 60,
-      }
+        start: chunk.start,
+        end: chunk.end,
+      }))
 
-      runRef
-        .current(input)
-        .then((result) => {
+      map(inputs)
+        .then((results) => {
           inFlight = false
 
           if (cancelled || requestVersion !== resetVersionRef.current) return
 
-          boidsRef.current = new Float32Array(result.buffer)
+          const next = new Float32Array(boidCount * 4)
+
+          results.forEach((result, index) => {
+            const chunk = chunks[index]
+            if (chunk === undefined) return
+
+            next.set(new Float32Array(result.buffer), chunk.start * 4)
+          })
+
+          boidsRef.current = next
           drawFrame()
-          recordSimulation(result.simulationMs)
+          recordSimulation(performance.now() - startedAt)
         })
         .catch(() => {
           inFlight = false
@@ -212,8 +239,8 @@ export function CanvasDemo() {
       uiFrames += 1
       publishMetrics()
 
-      if (engine === 'worker') {
-        submitWorkerFrame()
+      if (engine === 'pool') {
+        submitPoolFrame()
         return
       }
 
@@ -238,12 +265,8 @@ export function CanvasDemo() {
     return (): void => {
       cancelled = true
       cancelAnimationFrame(frameHandle)
-
-      if (inFlight) {
-        cancelRef.current({ mode: 'terminate' })
-      }
     }
-  }, [running, engine, boidCount, drawFrame])
+  }, [running, engine, boidCount, poolSize, drawFrame, map])
 
   const reset = (): void => {
     resetVersionRef.current += 1
@@ -266,7 +289,7 @@ export function CanvasDemo() {
   }
 
   const blocking = running && engine === 'main'
-  const status = running ? (blocking ? 'Blocking UI' : 'Off-thread') : 'Paused'
+  const status = running ? (blocking ? 'Blocking UI' : 'Off-thread pool') : 'Paused'
   const statusTone = blocking ? 'danger' : running ? 'success' : 'neutral'
 
   return (
@@ -280,8 +303,8 @@ export function CanvasDemo() {
         <p>
           Every tick compares {formatNumber(boidCount)} boids against every other boid —{' '}
           {formatNumber(boidCount * boidCount)} neighbor checks per frame — then steers them around
-          the cursor. Run it in the worker and the page keeps painting. Switch to the main thread
-          and the same loop fights React, input, and the browser for one CPU core.
+          the cursor. Spread it across {poolSize} workers and the page keeps painting. Switch to
+          the main thread and the same loop fights React, input, and the browser for one CPU core.
         </p>
       </div>
 
@@ -299,10 +322,10 @@ export function CanvasDemo() {
             <div className="segmented" role="group" aria-label="Simulation thread">
               <button
                 type="button"
-                className={`segmented__item${engine === 'worker' ? ' is-active' : ''}`}
-                onClick={() => setEngine('worker')}
+                className={`segmented__item${engine === 'pool' ? ' is-active' : ''}`}
+                onClick={() => setEngine('pool')}
               >
-                Worker
+                Worker pool
               </button>
               <button
                 type="button"
@@ -313,11 +336,29 @@ export function CanvasDemo() {
               </button>
             </div>
             <span className="field__hint">
-              {engine === 'worker'
-                ? 'Calculation is off-thread; the main thread only paints the returned buffer.'
+              {engine === 'pool'
+                ? `The pool splits the neighbor search across ${poolSize} worker${poolSize === 1 ? '' : 's'}; the main thread merges and paints.`
                 : 'Calculation, React, and painting share one thread. Expect jank.'}
             </span>
           </div>
+
+          {engine === 'pool' ? (
+            <div className="field">
+              <span className="field__label">Workers</span>
+              <div className="segmented" role="group" aria-label="Worker pool size">
+                {poolSizes.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`segmented__item${option === poolSize ? ' is-active' : ''}`}
+                    onClick={() => setPoolSize(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="field">
             <span className="field__label">Boids</span>
@@ -380,7 +421,7 @@ export function CanvasDemo() {
               <div className="result-card__head">
                 <span className="result-card__label">Last 400 ms</span>
                 <StatusBadge tone={statusTone} pulse={running}>
-                  {engine === 'worker' ? 'Off-thread compute' : 'On-thread compute'}
+                  {engine === 'pool' ? 'Off-thread pool' : 'On-thread compute'}
                 </StatusBadge>
               </div>
 
@@ -401,15 +442,15 @@ export function CanvasDemo() {
                   tone={metrics.uiFps < 50 ? 'danger' : 'success'}
                 />
                 <Stat
-                  label="Checks / frame"
-                  value={formatNumber(boidCount * boidCount)}
-                  tone="accent"
+                  label="Workers"
+                  value={engine === 'pool' ? poolSize : 1}
+                  tone={engine === 'pool' ? 'success' : 'danger'}
                 />
               </div>
 
               <p className="hint hint--tight">
-                {engine === 'worker'
-                  ? 'The worker returns a transferred Float32Array, so the main thread does no simulation math and almost no copying.'
+                {engine === 'pool'
+                  ? `Each worker returns a slice of the next frame; the main thread only merges ${poolSize} buffer${poolSize === 1 ? '' : 's'} and paints.`
                   : 'The simulation runs inside requestAnimationFrame on the main thread. A slow frame delays input, React updates, and the next paint.'}
               </p>
             </div>

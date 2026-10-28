@@ -77,7 +77,7 @@ Read the full API, configuration reference, and publishing guide in
 
 The playground covers:
 
-- a canvas boid swarm with O(n²) neighbor calculations
+- a worker-pool canvas boid swarm with O(n²) neighbor calculations and a main-thread comparison
 - cancellation with termination and cooperative checks
 - zero-copy transferables
 - bounded worker pools with live stats

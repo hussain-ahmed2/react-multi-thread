@@ -5,15 +5,16 @@ import { ArrowIcon, ChevronRightIcon } from '../components/Icons'
 const examples = [
   {
     id: 'canvas-swarm',
-    tag: 'Canvas + O(n²)',
+    tag: 'Canvas + worker pool',
     title: 'Run a canvas game loop off the main thread',
-    body: 'A boid swarm performs millions of neighbor checks per frame. The worker computes the next positions and returns a transferred Float32Array; the main thread only paints it, so input and React stay responsive.',
-    docs: { label: 'Transferables guide', to: '/docs/concepts#transferables' },
-    code: `const swarm = createWorker(({ buffer, count, width, height }) => {
+    body: 'A boid swarm performs millions of neighbor checks per frame. A worker pool splits the boids into slices, computes the next positions in parallel, and returns transferred buffers; the main thread only merges and paints them.',
+    docs: { label: 'Worker pool reference', to: '/docs/api#pool' },
+    code: `const swarmChunk = createWorker(({ buffer, count, start, end }) => {
   const boids = new Float32Array(buffer)
+  const output = new Float32Array((end - start) * 4)
   let checks = 0
 
-  for (let i = 0; i < count; i += 1) {
+  for (let i = start; i < end; i += 1) {
     const offset = i * 4
 
     for (let j = 0; j < count; j += 1) {
@@ -22,23 +23,36 @@ const examples = [
 
       // alignment, cohesion, separation, edges, pointer repel...
     }
+
+    // write nextX / nextY / nextVx / nextVy into output...
   }
 
-  return { buffer: boids.buffer, checks }
+  return { buffer: output.buffer, checks }
 })
 
 let boids = new Float32Array(count * 4)
-const worker = useWorker(swarm, { eager: true })
+const pool = useWorkerPool(swarmChunk, { size: 4 })
+const chunks = Array.from({ length: 4 }, (_, index) => ({
+  start: Math.floor((count * index) / 4),
+  end: Math.floor((count * (index + 1)) / 4),
+}))
 
 async function frame() {
-  const result = await worker.run({
+  const results = await pool.map(chunks.map(({ start, end }) => ({
     buffer: boids.buffer,
     count,
     width,
     height,
+    start,
+    end,
+  })))
+
+  const next = new Float32Array(count * 4)
+  results.forEach((result, index) => {
+    next.set(new Float32Array(result.buffer), chunks[index].start * 4)
   })
 
-  boids = new Float32Array(result.buffer)
+  boids = next
   draw(boids)
   requestAnimationFrame(() => void frame())
 }
