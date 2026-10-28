@@ -166,6 +166,11 @@ Import from `react-threaded`:
 - `isSharedMemoryAvailable`
 - Worker error classes and public types
 
+`useWorker` accepts `autoRun` for one typed initial task on mount. Use `input` for a
+single-function worker and `method` plus `args` for a methods worker. Parent renders and
+subsequent `autoRun` value changes do not start another task; call `run` or `call` for
+later work.
+
 Refer to the API page for exact signatures and examples:
 
 https://hussain-ahmed2.github.io/react-threaded/docs/api

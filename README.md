@@ -46,7 +46,7 @@ The demo runs at `http://localhost:5173`.
 | `pnpm build` | Build the library with tsup (ESM, CJS, DTS). |
 | `pnpm build:demo` | Typecheck and build the demo. |
 | `pnpm preview:demo` | Preview the production demo build. |
-| `pnpm test` | Run the library test suite (40 tests). |
+| `pnpm test` | Run the library test suite (45 tests). |
 | `pnpm test:coverage` | Run tests with V8 coverage. |
 | `pnpm typecheck` | Typecheck every workspace package. |
 | `pnpm verify` | Typecheck, test, build the library, and build the demo. |

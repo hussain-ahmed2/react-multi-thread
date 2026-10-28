@@ -1,9 +1,10 @@
 /**
  * React binding for a single worker.
  *
- * The worker is created lazily on the first task (or eagerly with
- * `config.eager`). State updates are guarded by a monotonically increasing run
- * id so a late result from a cancelled run can never overwrite a newer one.
+ * The worker is created lazily on the first task, eagerly with `config.eager`,
+ * or by the initial `config.autoRun` task. State updates are guarded by a
+ * monotonically increasing run id so a late result from a cancelled run can
+ * never overwrite a newer one.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -49,7 +50,7 @@ function createInitialState<Output>(): WorkerState<Output> {
  */
 export function useWorker<Definition extends AnyWorkerDefinition>(
   definition: Definition,
-  config: UseWorkerConfig<WorkerOutput<Definition>> = {},
+  config: UseWorkerConfig<Definition> = {},
 ): WorkerController<Definition> {
   const handleRef = useRef<WorkerHandle<Definition> | null>(null)
   const configRef = useRef(config)
@@ -194,6 +195,29 @@ export function useWorker<Definition extends AnyWorkerDefinition>(
       execute(method, [...args], options) as Promise<WorkerMethodResult<Definition, Key>>,
     [execute],
   )
+
+  useEffect(() => {
+    const autoRun = configRef.current.autoRun
+
+    if (autoRun === undefined) return
+
+    let active = true
+    const timer = setTimeout(() => {
+      if (!active) return
+
+      const task =
+        'input' in autoRun
+          ? execute(null, [autoRun.input], autoRun.options ?? {})
+          : execute(autoRun.method, [...autoRun.args], autoRun.options ?? {})
+
+      void task.catch(() => undefined)
+    }, 0)
+
+    return (): void => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [execute])
 
   const cancel = useCallback((options: CancelTaskOptions = {}): void => {
     runIdRef.current += 1

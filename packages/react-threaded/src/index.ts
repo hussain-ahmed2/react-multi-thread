@@ -46,6 +46,7 @@ export type {
   MethodsOf,
   TaskOptions,
   UseWorkerConfig,
+  WorkerAutoRun,
   WorkerConfig,
   WorkerContext,
   WorkerController,

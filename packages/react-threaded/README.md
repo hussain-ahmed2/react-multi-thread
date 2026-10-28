@@ -70,6 +70,18 @@ export function Fibonacci() {
 
 > The handler is converted to source text and executed in an isolated worker. It must be self-contained: no imports, no closures over module variables, and no references to React state.
 
+## Run on mount
+
+Use `autoRun` when the first task should start as soon as the hook mounts:
+
+```tsx
+const worker = useWorker(fibonacci, {
+  autoRun: { input: 50_000 },
+})
+```
+
+It starts one task for the current definition. Parent renders and later changes to the `autoRun` value do not rerun it. Single-function workers use `input`; methods workers use a typed `method` and `args`. Both forms accept task `options` such as `timeoutMs` or `signal`.
+
 ## Progress and cancellation
 
 ```tsx
@@ -358,7 +370,7 @@ const metrics: WorkerPlugin = {
 
 ### `useWorker` config
 
-Extends `WorkerConfig` with `eager`, `onSuccess`, `onError`, `onProgress`, `onMessage`, and `onRetry`.
+Extends `WorkerConfig` with `eager`, `autoRun`, `onSuccess`, `onError`, `onProgress`, `onMessage`, and `onRetry`. `autoRun` takes the typed initial task (`input` for single-function workers, or `method` plus `args` for methods workers) and runs once per definition.
 
 ### Errors
 

@@ -23,6 +23,15 @@ export function Fibonacci() {
   )
 }`
 
+export const autoRunCode = `const worker = useWorker(fib, {
+  autoRun: { input: 50_000 },
+})
+
+// Methods workers use a typed method name and arguments.
+const math = useWorker(mathWorker, {
+  autoRun: { method: 'stats', args: [values] },
+})`
+
 export const progressCode = `const primeWorker = createWorker(async (limit: number, ctx) => {
   const composite = new Uint8Array(limit + 1)
   let count = 0

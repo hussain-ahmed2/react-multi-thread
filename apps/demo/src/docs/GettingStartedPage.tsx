@@ -3,7 +3,7 @@ import { CodeBlock } from '../components/CodeBlock'
 import { ArrowIcon } from '../components/Icons'
 import { Callout } from './components/Callout'
 import { DocPage, DocSection } from './components/DocPage'
-import { firstWorkerCode, installCode, progressCode } from './snippets'
+import { autoRunCode, firstWorkerCode, installCode, progressCode } from './snippets'
 
 export function GettingStartedPage() {
   return (
@@ -62,6 +62,24 @@ console.log(worker.durationMs)`}
         <p>
           The hook creates the worker on mount and terminates it on unmount. Set{' '}
           <code>eager: true</code> if you want the worker spawned before the first task.
+        </p>
+      </DocSection>
+
+      <DocSection
+        id="auto-run"
+        title="Run on mount"
+        lede="Set autoRun when the first task should start without a button or effect."
+      >
+        <CodeBlock code={autoRunCode} title="Auto-run" />
+        <p>
+          <code>autoRun</code> starts one task when the hook mounts. Parent renders and later changes
+          to the <code>autoRun</code> value do not start another task. Call <code>run()</code> or{' '}
+          <code>call()</code> for later work, or change the worker definition to start a new worker.
+        </p>
+        <p>
+          The value is typed from the definition: single-function workers accept <code>input</code>,
+          and methods workers accept <code>method</code> with the matching <code>args</code>. Both
+          accept task <code>options</code> such as timeout, transfer, and abort signal.
         </p>
       </DocSection>
 

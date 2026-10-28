@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { CodeBlock } from '../components/CodeBlock'
 import { Callout } from './components/Callout'
 import { DocPage, DocSection } from './components/DocPage'
-import { installCode } from './snippets'
+import { autoRunCode, installCode } from './snippets'
 
 type ApiEntryProps = {
   readonly signature: string
@@ -69,8 +69,8 @@ export function ApiReferencePage() {
           <p>
             Creates a worker on mount, terminates it on unmount, and returns the state machine plus
             task methods. Config extends <code>WorkerConfig</code> with <code>eager</code>,{' '}
-            <code>onSuccess</code>, <code>onError</code>, <code>onProgress</code>,{' '}
-            <code>onMessage</code>, and <code>onRetry</code>.
+            <code>autoRun</code>, <code>onSuccess</code>, <code>onError</code>,{' '}
+            <code>onProgress</code>, <code>onMessage</code>, and <code>onRetry</code>.
           </p>
           <CodeBlock
             code={`const worker = useWorker(fib, { eager: true })
@@ -89,6 +89,12 @@ worker.reset()
 worker.restart()`}
             title="Controller"
           />
+          <p>
+            <code>autoRun</code> starts one typed initial task on mount. It does not rerun on parent
+            renders or when the <code>autoRun</code> value changes; use <code>run()</code> or{' '}
+            <code>call()</code> for later tasks.
+          </p>
+          <CodeBlock code={autoRunCode} title="Run on mount" />
         </ApiEntry>
       </DocSection>
 

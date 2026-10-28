@@ -10,6 +10,7 @@ Demo and documentation: https://hussain-ahmed2.github.io/react-threaded/
 
 - React 18 or newer, TypeScript 5 or newer, modern browser with Web Workers.
 - Workers run from Blob URLs by default, so no bundler-specific worker file is required.
+- `useWorker` can start one typed initial task with `autoRun`; parent renders do not rerun it.
 - Worker inputs and results use structured clone. Transferables move ownership instead of copying.
 - Shared atomics and SharedArrayBuffer require cross-origin isolation: COOP `same-origin` and COEP `require-corp`.
 - GitHub Pages cannot set COOP or COEP. The demo detects isolation and falls back from shared atomics.

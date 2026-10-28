@@ -179,11 +179,31 @@ export type WorkerState<Output> = {
   readonly attempts: number
 }
 
+/** The first task started automatically when `useWorker()` mounts. */
+export type WorkerAutoRun<Definition extends AnyWorkerDefinition> =
+  HandlerOf<Definition> extends (...args: never[]) => unknown
+    ? {
+        readonly input: WorkerInput<Definition>
+        readonly options?: TaskOptions
+      }
+    : {
+        [Method in WorkerMethodKeys<Definition>]: {
+          readonly method: Method
+          readonly args: WorkerMethodArgs<Definition, Method>
+          readonly options?: TaskOptions
+        }
+      }[WorkerMethodKeys<Definition>]
+
 /** Options accepted by `useWorker()`. */
-export type UseWorkerConfig<Output> = WorkerConfig & {
+export type UseWorkerConfig<Definition extends AnyWorkerDefinition> = WorkerConfig & {
   /** Spawn the worker as soon as the component mounts. */
   readonly eager?: boolean
-  readonly onSuccess?: (result: Output) => void
+  /**
+   * Run one task when the hook mounts for the current definition. Parent
+   * renders and later `autoRun` value changes do not start another task.
+   */
+  readonly autoRun?: WorkerAutoRun<Definition>
+  readonly onSuccess?: (result: WorkerOutput<Definition>) => void
   readonly onError?: (error: Error) => void
   readonly onProgress?: (value: unknown) => void
   readonly onMessage?: (message: unknown) => void
